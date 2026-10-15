@@ -33,7 +33,7 @@ export const TRANSLATIONS: Record<
     navContact: 'Contact',
     navQuoteCalc: 'Devis',
     navPremium: 'Premium',
-    navClientSpace: 'Espace Client',
+    navClientSpace: 'Espace client',
     navAdminSpace: 'Administration',
     ctaRequestService: 'Demander un service',
     ctaRequestQuote: 'Demander un devis',

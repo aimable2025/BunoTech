@@ -22,10 +22,12 @@ import {
   ClientDocument,
   ClientSubscription,
   DirectMessage,
+  PaymentRecord,
   QuoteDocument,
   ServiceItem,
   ServiceRequest,
   SiteSettings,
+  SubscriptionPlan,
   UserProfile,
 } from '../types';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -38,6 +40,8 @@ interface ClientDashboardProps {
   serviceRequests: ServiceRequest[];
   quotes: QuoteDocument[];
   subscriptions: ClientSubscription[];
+  subscriptionPlans?: SubscriptionPlan[];
+  payments?: PaymentRecord[];
   messages: DirectMessage[];
   notifications: AppNotification[];
   savedDocuments: ClientDocument[];
@@ -53,6 +57,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   serviceRequests,
   quotes,
   subscriptions,
+  subscriptionPlans = [],
+  payments = [],
   messages,
   notifications,
   savedDocuments,
@@ -61,7 +67,15 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   onNavigateToPremium,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'new_request' | 'requests' | 'quotes' | 'messages' | 'notifications' | 'testimonial' | 'profile'
+    | 'overview'
+    | 'new_request'
+    | 'requests'
+    | 'quotes'
+    | 'subscriptions'
+    | 'messages'
+    | 'notifications'
+    | 'testimonial'
+    | 'profile'
   >(preselectedServiceId ? 'new_request' : 'overview');
 
   const [selectedQuoteModal, setSelectedQuoteModal] = useState<QuoteDocument | null>(null);
@@ -113,6 +127,87 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const [profOrg, setProfOrg] = useState(userProfile.organization);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profFeedback, setProfFeedback] = useState<string | null>(null);
+
+  // Subscription Form State
+  const [selectedSubPlan, setSelectedSubPlan] = useState<SubscriptionPlan | null>(null);
+  const [subCurrency, setSubCurrency] = useState<'USD' | 'CDF'>('USD');
+  const [subMethod, setSubMethod] = useState('Mobile Money (M-Pesa / Airtel Money / Orange Money)');
+  const [subReference, setSubReference] = useState('');
+  const [submittingSub, setSubmittingSub] = useState(false);
+  const [subActionFeedback, setSubActionFeedback] = useState<string | null>(null);
+
+  const handleSubscribePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSubPlan || !subReference.trim()) {
+      setSubActionFeedback('Veuillez sélectionner une formule et indiquer la référence de votre paiement.');
+      return;
+    }
+    setSubmittingSub(true);
+    setSubActionFeedback(null);
+    const subId = generateId('sub');
+    const payId = generateId('pay');
+    const price = subCurrency === 'USD' ? selectedSubPlan.priceUSD : selectedSubPlan.priceCDF;
+
+    try {
+      await setDoc(doc(db, 'subscriptions', subId), {
+        id: subId,
+        clientId: userProfile.uid,
+        clientName: userProfile.fullName,
+        clientEmail: userProfile.email,
+        planId: selectedSubPlan.id,
+        planName: selectedSubPlan.name,
+        pricePaid: price,
+        currency: subCurrency,
+        paymentReference: subReference.trim(),
+        status: 'pending',
+        startDateIso: new Date().toISOString(),
+        endDateIso: '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      await setDoc(doc(db, 'payments', payId), {
+        id: payId,
+        clientId: userProfile.uid,
+        clientName: userProfile.fullName,
+        amount: price,
+        currency: subCurrency,
+        method: subMethod,
+        reference: subReference.trim(),
+        targetType: 'subscription',
+        targetId: subId,
+        status: 'pending_verification',
+        verifiedBy: '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      await createSystemNotification(
+        'ADMIN',
+        'new_subscription_payment',
+        `Nouvelle souscription (${selectedSubPlan.name})`,
+        `${userProfile.fullName} a souscrit à « ${selectedSubPlan.name} » (${price} ${subCurrency}). Réf: ${subReference.trim()}`,
+        subId
+      );
+
+      await writeAuditLog(
+        userProfile.uid,
+        userProfile.email,
+        'SUBSCRIPTION_REQUESTED',
+        'subscription',
+        subId,
+        `Souscription à la formule ${selectedSubPlan.name} soumise (${price} ${subCurrency}).`
+      );
+
+      setSubReference('');
+      setSelectedSubPlan(null);
+      setSubActionFeedback('Votre demande d’abonnement a été transmise. L’administrateur validera l’accès dès confirmation du paiement.');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `subscriptions/${subId}`);
+    } finally {
+      setSubmittingSub(false);
+    }
+  };
 
   const handleCreateServiceRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,12 +475,16 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <p className="text-[11px] text-slate-500">Documents cloud</p>
           <p className="text-xl font-bold font-mono text-slate-900 mt-1 tabular-nums">{savedDocuments.length}</p>
         </div>
-        <div className="rounded-xl bg-white border border-slate-200 p-3.5">
+        <button
+          type="button"
+          onClick={() => setActiveTab('subscriptions')}
+          className="rounded-xl bg-white border border-slate-200 p-3.5 text-left hover:border-slate-300 transition-colors cursor-pointer"
+        >
           <p className="text-[11px] text-slate-500">Abonnement</p>
           <p className="text-xs font-bold text-slate-900 mt-1.5 truncate">
-            {activeSubscription ? activeSubscription.planName : 'Aucun actif'}
+            {activeSubscription ? activeSubscription.planName : 'Souscrire →'}
           </p>
-        </div>
+        </button>
       </div>
 
       {/* Navigation Tabs */}
@@ -395,6 +494,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           { id: 'new_request', label: 'Nouvelle demande', icon: PlusCircle },
           { id: 'requests', label: `Mes demandes (${serviceRequests.length})`, icon: FileCheck2 },
           { id: 'quotes', label: `Mes devis (${quotes.length})`, icon: FileText },
+          { id: 'subscriptions', label: `Abonnements (${subscriptions.length})`, icon: CreditCard },
           { id: 'messages', label: `Messages (${messages.length})`, icon: MessageSquare },
           { id: 'notifications', label: `Notifications (${unreadNotificationsCount})`, icon: Bell },
           { id: 'testimonial', label: 'Témoignage', icon: Star },
@@ -744,6 +844,254 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB: SUBSCRIPTIONS & PLANS */}
+      {activeTab === 'subscriptions' && (
+        <div className="space-y-6">
+          {subActionFeedback && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-900">
+              {subActionFeedback}
+            </div>
+          )}
+
+          {/* Current Active Subscription Banner */}
+          <div className="rounded-xl bg-white border border-slate-200 p-6">
+            <h3 className="text-sm font-bold text-slate-900 mb-4">Statut de votre abonnement actuel</h3>
+            {activeSubscription ? (
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Abonnement actif : {activeSubscription.planName}
+                  </span>
+                  <span className="text-xs font-mono font-semibold text-emerald-900">
+                    Montant : {activeSubscription.pricePaid} {activeSubscription.currency} (Réf : {activeSubscription.paymentReference})
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-800">
+                  Valide jusqu’au : {activeSubscription.endDateIso ? new Date(activeSubscription.endDateIso).toLocaleDateString('fr-FR') : 'Durée contractuelle en cours'}.
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={onNavigateToPremium}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Accéder aux outils BUNO Tech Premium</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-slate-50 border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-900">Aucun abonnement actif</p>
+                  <p className="text-xs text-slate-600">
+                    Souscrivez à une formule pour débloquer le traitement de texte professionnel, les modèles administratifs, les modules de formation certifiants et l'assistant IA.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onNavigateToPremium}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap cursor-pointer shrink-0"
+                >
+                  Découvrir les outils Premium
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Formules Disponibles & Souscription */}
+          <div className="rounded-xl bg-white border border-slate-200 p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Formules d’abonnement BUNO Tech</h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Tarification transparente en Dollar américain (USD) ou Franc congolais (CDF).
+                </p>
+              </div>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setSubCurrency('USD')}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                    subCurrency === 'USD' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600'
+                  }`}
+                >
+                  USD ($)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubCurrency('CDF')}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                    subCurrency === 'CDF' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600'
+                  }`}
+                >
+                  CDF (FC)
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {subscriptionPlans.map((plan) => {
+                const isSelected = selectedSubPlan?.id === plan.id;
+                const price = subCurrency === 'USD' ? `$${plan.priceUSD}` : `${plan.priceCDF.toLocaleString('fr-FR')} CDF`;
+                return (
+                  <div
+                    key={plan.id}
+                    className={`rounded-xl border p-5 flex flex-col justify-between transition-all ${
+                      isSelected
+                        ? 'border-sky-600 bg-sky-50/40 ring-2 ring-sky-600/20'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-sky-700">{plan.durationLabel}</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                          {plan.durationDays} jours
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900">{plan.name}</h4>
+                      <p className="text-2xl font-black font-display text-slate-950 tabular-nums">{price}</p>
+                      <p className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed">{plan.features}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSubPlan(plan)}
+                      className={`mt-5 w-full rounded-lg py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-sky-600 text-white font-bold'
+                          : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                      }`}
+                    >
+                      {isSelected ? '✓ Formule sélectionnée' : 'Choisir cette formule'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Payment Reference Form */}
+            {selectedSubPlan && (
+              <form
+                onSubmit={handleSubscribePlan}
+                className="rounded-xl border-2 border-sky-500/40 bg-sky-50/20 p-5 space-y-4"
+              >
+                <h4 className="text-sm font-bold text-slate-900">
+                  Confirmer la souscription : {selectedSubPlan.name} ({subCurrency === 'USD' ? `$${selectedSubPlan.priceUSD}` : `${selectedSubPlan.priceCDF.toLocaleString('fr-FR')} CDF`})
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Moyen de paiement utilisé *</label>
+                    <select
+                      value={subMethod}
+                      onChange={(e) => setSubMethod(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="Mobile Money (M-Pesa / Airtel Money / Orange Money)">
+                        Mobile Money (M-Pesa / Airtel Money / Orange Money)
+                      </option>
+                      <option value="Virement bancaire (Rawbank / Equity BCDC)">
+                        Virement bancaire (Rawbank / Equity BCDC)
+                      </option>
+                      <option value="Paiement direct à Goma (Cash avec reçu)">
+                        Paiement direct à Goma (Cash avec reçu)
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Numéro de référence de transaction / ID Mobile Money *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={subReference}
+                      onChange={(e) => setSubReference(e.target.value)}
+                      placeholder="Ex: MP241015.0019 ou ID transaction"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-[11px] text-slate-500">
+                    Paiement vérifié manuellement par Aimable Maombi Bunoti avant activation de l'accès.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={submittingSub}
+                    className="rounded-lg bg-sky-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-sky-500 disabled:opacity-50 cursor-pointer"
+                  >
+                    {submittingSub ? 'Transmission...' : 'Soumettre le paiement'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* Subscriptions History Table */}
+          <div className="rounded-xl bg-white border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-900">Historique de vos abonnements et règlements</h3>
+            </div>
+            {subscriptions.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500">
+                Aucun historique d’abonnement disponible pour le moment.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100/60 border-b border-slate-200 text-slate-700 font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Formule</th>
+                      <th className="py-3 px-4">Montant réglé</th>
+                      <th className="py-3 px-4">Référence</th>
+                      <th className="py-3 px-4">Statut</th>
+                      <th className="py-3 px-4">Date de début</th>
+                      <th className="py-3 px-4">Date d'échéance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {subscriptions.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4 font-semibold text-slate-900">{sub.planName}</td>
+                        <td className="py-3 px-4 font-mono tabular-nums">
+                          {sub.pricePaid} {sub.currency}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-600">{sub.paymentReference || '—'}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              sub.status === 'active'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : sub.status === 'pending'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {sub.status === 'active'
+                              ? 'Actif'
+                              : sub.status === 'pending'
+                              ? 'En attente de validation'
+                              : sub.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">
+                          {sub.startDateIso ? new Date(sub.startDateIso).toLocaleDateString('fr-FR') : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">
+                          {sub.endDateIso ? new Date(sub.endDateIso).toLocaleDateString('fr-FR') : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

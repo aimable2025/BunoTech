@@ -737,8 +737,8 @@ export default function App() {
             </div>
           </button>
 
-          {/* Zone 2: Ordered Navigation Structure (Accueil -> Services -> À propos -> Partenaires -> Réalisations -> Témoignages -> Contact -> Premium) */}
-          <nav className="hidden xl:flex items-center gap-5 text-xs font-semibold text-slate-600">
+          {/* Zone 2: Ordered Navigation Structure (10 Sections) */}
+          <nav className="hidden xl:flex items-center gap-3.5 2xl:gap-4.5 text-xs font-semibold text-slate-600">
             <button
               type="button"
               onClick={() => setCurrentView('home')}
@@ -804,6 +804,15 @@ export default function App() {
             </button>
             <button
               type="button"
+              onClick={() => setCurrentView('client_dashboard')}
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
+                currentView === 'client_dashboard' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
+              }`}
+            >
+              {t.navClientSpace}
+            </button>
+            <button
+              type="button"
               onClick={() => setCurrentView('premium')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
                 currentView === 'premium' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
@@ -811,10 +820,24 @@ export default function App() {
             >
               {t.navPremium}
             </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView('admin_dashboard')}
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1 ${
+                currentView === 'admin_dashboard'
+                  ? 'text-sky-700 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold'
+                  : isAdmin
+                  ? 'text-sky-600 font-semibold'
+                  : ''
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+              <span>{t.navAdminSpace}</span>
+            </button>
           </nav>
 
           {/* Zone 3: Primary Actions & Auth */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-2">
             <select
               aria-label="Langue"
               value={lang}
@@ -831,31 +854,22 @@ export default function App() {
             <button
               type="button"
               onClick={() => setCurrentView('quote_calculator')}
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
             >
               {t.ctaRequestQuote}
             </button>
 
             {firebaseUser ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setCurrentView('client_dashboard')}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap cursor-pointer"
+                  onClick={() => setCurrentView(isAdmin ? 'admin_dashboard' : 'client_dashboard')}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap cursor-pointer"
+                  title={userProfile?.email}
                 >
                   <UserCheck className="w-3.5 h-3.5 text-sky-400" />
-                  <span>{t.navClientSpace}</span>
+                  <span className="max-w-[110px] truncate">{userProfile?.fullName || 'Mon compte'}</span>
                 </button>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('admin_dashboard')}
-                    className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-500 whitespace-nowrap cursor-pointer"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Admin</span>
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -869,7 +883,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setCurrentView('auth')}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{t.ctaSignIn}</span>
@@ -888,7 +902,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Navigation Drawer (10 Sections) */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
@@ -900,7 +914,9 @@ export default function App() {
                 { id: 'portfolio', label: t.navPortfolio },
                 { id: 'testimonials', label: t.navTestimonials },
                 { id: 'contact', label: t.navContact },
+                { id: 'client_dashboard', label: t.navClientSpace },
                 { id: 'premium', label: t.navPremium },
+                { id: 'admin_dashboard', label: t.navAdminSpace },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -918,31 +934,27 @@ export default function App() {
               ))}
             </div>
             <div className="pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentView('quote_calculator');
+                  setMobileMenuOpen(false);
+                }}
+                className="flex-1 rounded-lg border border-slate-300 py-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 text-center"
+              >
+                {t.ctaRequestQuote}
+              </button>
               {firebaseUser ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentView('client_dashboard');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex-1 rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white"
-                  >
-                    {t.navClientSpace}
-                  </button>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentView('admin_dashboard');
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex-1 rounded-lg bg-sky-600 py-2.5 text-xs font-semibold text-white"
-                    >
-                      {t.navAdminSpace}
-                    </button>
-                  )}
-                </>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSignOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                >
+                  {t.ctaSignOut}
+                </button>
               ) : (
                 <button
                   type="button"
@@ -950,9 +962,9 @@ export default function App() {
                     setCurrentView('auth');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white"
+                  className="flex-1 rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 text-center"
                 >
-                  {t.ctaCreateAccount} / {t.ctaSignIn}
+                  {t.ctaSignIn}
                 </button>
               )}
             </div>
@@ -2414,7 +2426,7 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 10: CLIENT DASHBOARD */}
+        {/* VIEW 10: CLIENT DASHBOARD (Espace client — Demandes, devis, messages et abonnements) */}
         {currentView === 'client_dashboard' && userProfile && (
           <ClientDashboard
             userProfile={userProfile}
@@ -2423,6 +2435,8 @@ export default function App() {
             serviceRequests={serviceRequests}
             quotes={quotes}
             subscriptions={subscriptions}
+            subscriptionPlans={subscriptionPlans}
+            payments={payments}
             messages={messages}
             notifications={notifications}
             savedDocuments={savedDocuments}
@@ -2432,7 +2446,72 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 11: ADMIN DASHBOARD */}
+        {/* VIEW 10 (GUEST GATE): CLIENT DASHBOARD */}
+        {currentView === 'client_dashboard' && !userProfile && (
+          <section className="max-w-xl mx-auto px-4 py-16">
+            <div className="rounded-2xl bg-white border border-slate-200 p-8 space-y-6 shadow-xs">
+              <div className="space-y-2 text-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center mx-auto">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+                <p className="text-xs font-semibold text-sky-700 tracking-wider uppercase">BUNO Tech · Espace Client</p>
+                <h1 className="text-2xl font-bold text-slate-900">Accéder à votre Espace Client</h1>
+                <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                  Suivez vos demandes de services, consultez et négociez vos devis officiels, échangez par messagerie directe avec le responsable et gérez vos abonnements.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2 text-xs text-slate-700">
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/60">
+                  <span className="font-bold text-slate-900 block mb-0.5">Demandes & Projets</span>
+                  Suivi transparent étape par étape de chaque prestation.
+                </div>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/60">
+                  <span className="font-bold text-slate-900 block mb-0.5">Devis & Factures</span>
+                  Chiffrage clair en USD et CDF avec calcul immédiat.
+                </div>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/60">
+                  <span className="font-bold text-slate-900 block mb-0.5">Messagerie Directe</span>
+                  Fil de discussion privé avec l'équipe BUNO Tech.
+                </div>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/60">
+                  <span className="font-bold text-slate-900 block mb-0.5">Abonnements Premium</span>
+                  Traitement de texte, modèles officiels et formation.
+                </div>
+              </div>
+
+              {authError && (
+                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800">
+                  {authError}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <label className="flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={regAcceptedTerms}
+                    onChange={(e) => setRegAcceptedTerms(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    J’accepte les conditions générales de prestation et la politique de confidentialité de BUNO Tech.
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  className="w-full flex items-center justify-center gap-2.5 rounded-lg bg-slate-900 py-3 px-4 text-xs font-bold text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <LogIn className="w-4 h-4 text-sky-400" />
+                  <span>Se connecter avec Google (Compte Client)</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 11: ADMIN DASHBOARD (Administration — Gestion des services, tarifs, clients, projets et contenus) */}
         {currentView === 'admin_dashboard' && userProfile && isAdmin && (
           <AdminDashboard
             adminUser={userProfile}
@@ -2451,6 +2530,85 @@ export default function App() {
             messages={messages}
             auditLogs={auditLogs}
           />
+        )}
+
+        {/* VIEW 11: ACCESS RESTRICTED FOR NON-ADMIN LOGGED-IN USERS */}
+        {currentView === 'admin_dashboard' && userProfile && !isAdmin && (
+          <section className="max-w-md mx-auto px-4 py-16">
+            <div className="rounded-2xl bg-white border border-amber-200 p-8 space-y-6 text-center">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-slate-900">Accès Réservé à l'Administration</h2>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Votre compte actuel (<strong className="text-slate-800">{userProfile.email}</strong>) dispose des droits <strong>Client</strong>.
+                </p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Cette console est exclusivement réservée à la direction de BUNO Tech (Aimable Maombi Bunoti : <code>aimablebunoti@gmail.com</code> / <code>aimablebunotech@gmail.com</code>).
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('client_dashboard')}
+                  className="w-full rounded-lg bg-slate-900 py-2.5 px-4 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                >
+                  Ouvrir mon Espace Client
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="w-full rounded-lg border border-slate-300 py-2.5 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  Se déconnecter pour changer de compte
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 11: GUEST PROMPT FOR ADMINISTRATION */}
+        {currentView === 'admin_dashboard' && !userProfile && (
+          <section className="max-w-md mx-auto px-4 py-16">
+            <div className="rounded-2xl bg-white border border-slate-200 p-8 space-y-6 text-center">
+              <div className="w-12 h-12 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-sky-700 uppercase tracking-wider">Console d'Administration</p>
+                <h2 className="text-2xl font-bold text-slate-900">Direction BUNO Tech</h2>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Gestion centralisée des services, tarifs, devis, commandes, abonnements et contenus du portail.
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Accès protégé réservé à Aimable Maombi Bunoti.
+                </p>
+              </div>
+              {authError && (
+                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 text-left">
+                  {authError}
+                </div>
+              )}
+              <div className="pt-2 space-y-2">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-slate-900 py-3 px-4 text-xs font-bold text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <LogIn className="w-4 h-4 text-sky-400" />
+                  <span>Connexion Administrateur</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('home')}
+                  className="w-full py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                >
+                  Retour au site public
+                </button>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* VIEW 12: AUTHENTICATION / CLIENT ACCOUNT CREATION */}
