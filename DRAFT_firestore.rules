@@ -1,0 +1,719 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isVerifiedAdminEmail() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'aimablebunoti@gmail.com' ||
+        request.auth.token.email == 'aimablebunotech@gmail.com'
+      );
+    }
+    function isAdmin() {
+      return isVerifiedAdminEmail() || (
+        isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 1. Admins
+    function isValidAdmin(data) {
+      return data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+             data.createdAt is timestamp;
+    }
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(adminId) &&
+                    incoming().keys().hasAll(['uid', 'email', 'createdAt']) &&
+                    incoming().keys().hasOnly(['uid', 'email', 'createdAt']) &&
+                    isValidAdmin(incoming()) &&
+                    incoming().uid == adminId &&
+                    incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // 2. Users (PII Isolated to Owner or Admin)
+    function isValidUserProfile(data) {
+      return data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+             data.phone is string && data.phone.size() <= 40 &&
+             data.organization is string && data.organization.size() <= 120 &&
+             data.role is string && data.role.size() <= 20 && (data.role == 'client' || data.role == 'admin') &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'active' || data.status == 'suspended') &&
+             data.acceptedTerms is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn() && (existing().uid == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(userId) &&
+                    incoming().keys().hasAll(['uid', 'fullName', 'email', 'phone', 'organization', 'role', 'status', 'acceptedTerms', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['uid', 'fullName', 'email', 'phone', 'organization', 'role', 'status', 'acceptedTerms', 'createdAt', 'updatedAt']) &&
+                    isValidUserProfile(incoming()) &&
+                    incoming().uid == userId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (request.auth.uid == userId && incoming().role == 'client' && incoming().status == 'active' && incoming().acceptedTerms == true) ||
+                      isAdmin()
+                    );
+      allow update: if isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming()) &&
+                    incoming().uid == existing().uid &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time && (
+                      (request.auth.uid == userId && existing().status == 'active' && incoming().role == existing().role && incoming().status == existing().status && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'organization', 'updatedAt'])) ||
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'organization', 'role', 'status', 'updatedAt']))
+                    );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // 3. Site Settings
+    function isValidSiteSettings(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.ownerName is string && data.ownerName.size() >= 2 && data.ownerName.size() <= 120 &&
+             data.brandName is string && data.brandName.size() >= 2 && data.brandName.size() <= 80 &&
+             data.tagline is string && data.tagline.size() >= 2 && data.tagline.size() <= 300 &&
+             data.positioning is string && data.positioning.size() >= 2 && data.positioning.size() <= 500 &&
+             data.bioNarrative is string && data.bioNarrative.size() >= 10 && data.bioNarrative.size() <= 5000 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+             data.whatsapp is string && data.whatsapp.size() >= 3 && data.whatsapp.size() <= 50 &&
+             data.github is string && data.github.size() >= 1 && data.github.size() <= 200 &&
+             data.youtube is string && data.youtube.size() >= 1 && data.youtube.size() <= 300 &&
+             data.facebook is string && data.facebook.size() >= 1 && data.facebook.size() <= 200 &&
+             data.linkedin is string && data.linkedin.size() >= 1 && data.linkedin.size() <= 300 &&
+             data.twitter is string && data.twitter.size() <= 300 &&
+             data.cvSummary is string && data.cvSummary.size() <= 3000 &&
+             data.cvObjectives is string && data.cvObjectives.size() <= 2000 &&
+             data.isPublic is bool &&
+             data.updatedAt is timestamp;
+    }
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(settingId) &&
+                    incoming().keys().hasAll(['id', 'ownerName', 'brandName', 'tagline', 'positioning', 'bioNarrative', 'email', 'whatsapp', 'github', 'youtube', 'facebook', 'linkedin', 'twitter', 'cvSummary', 'cvObjectives', 'isPublic', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'ownerName', 'brandName', 'tagline', 'positioning', 'bioNarrative', 'email', 'whatsapp', 'github', 'youtube', 'facebook', 'linkedin', 'twitter', 'cvSummary', 'cvObjectives', 'isPublic', 'updatedAt']) &&
+                    isValidSiteSettings(incoming()) &&
+                    incoming().id == settingId &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(settingId) && isValidSiteSettings(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['ownerName', 'brandName', 'tagline', 'positioning', 'bioNarrative', 'email', 'whatsapp', 'github', 'youtube', 'facebook', 'linkedin', 'twitter', 'cvSummary', 'cvObjectives', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(settingId);
+    }
+
+    // 4. Services Catalog
+    function isValidServiceItem(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+             data.iconName is string && data.iconName.size() >= 1 && data.iconName.size() <= 50 &&
+             data.category is string && data.category.size() >= 2 && data.category.size() <= 80 &&
+             data.shortDescription is string && data.shortDescription.size() >= 5 && data.shortDescription.size() <= 400 &&
+             data.includedFeatures is string && data.includedFeatures.size() >= 2 && data.includedFeatures.size() <= 2000 &&
+             data.indicativePrice is string && data.indicativePrice.size() >= 1 && data.indicativePrice.size() <= 80 &&
+             data.estimatedDelay is string && data.estimatedDelay.size() >= 1 && data.estimatedDelay.size() <= 80 &&
+             data.availability is string && data.availability.size() <= 20 && (data.availability == 'available' || data.availability == 'busy' || data.availability == 'suspended') &&
+             data.orderIndex is number &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /services/{serviceId} {
+      allow get: if isValidId(serviceId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(serviceId) &&
+                    incoming().keys().hasAll(['id', 'title', 'iconName', 'category', 'shortDescription', 'includedFeatures', 'indicativePrice', 'estimatedDelay', 'availability', 'orderIndex', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'title', 'iconName', 'category', 'shortDescription', 'includedFeatures', 'indicativePrice', 'estimatedDelay', 'availability', 'orderIndex', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidServiceItem(incoming()) &&
+                    incoming().id == serviceId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(serviceId) && isValidServiceItem(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'iconName', 'category', 'shortDescription', 'includedFeatures', 'indicativePrice', 'estimatedDelay', 'availability', 'orderIndex', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(serviceId);
+    }
+
+    // 5. Internal Pricing Rules
+    function isValidPricingRule(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.serviceName is string && data.serviceName.size() >= 2 && data.serviceName.size() <= 140 &&
+             data.itemType is string && data.itemType.size() >= 1 && data.itemType.size() <= 100 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 60 &&
+             data.format is string && data.format.size() >= 1 && data.format.size() <= 60 &&
+             data.unitPriceUSD is number && data.unitPriceUSD >= 0 &&
+             data.unitPriceCDF is number && data.unitPriceCDF >= 0 &&
+             data.validityPeriod is string && data.validityPeriod.size() >= 1 && data.validityPeriod.size() <= 100 &&
+             data.conditions is string && data.conditions.size() <= 500 &&
+             data.available is bool &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /pricing/{pricingId} {
+      allow get: if isValidId(pricingId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(pricingId) &&
+                    incoming().keys().hasAll(['id', 'serviceName', 'itemType', 'unit', 'format', 'unitPriceUSD', 'unitPriceCDF', 'validityPeriod', 'conditions', 'available', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'serviceName', 'itemType', 'unit', 'format', 'unitPriceUSD', 'unitPriceCDF', 'validityPeriod', 'conditions', 'available', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidPricingRule(incoming()) &&
+                    incoming().id == pricingId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(pricingId) && isValidPricingRule(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['serviceName', 'itemType', 'unit', 'format', 'unitPriceUSD', 'unitPriceCDF', 'validityPeriod', 'conditions', 'available', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(pricingId);
+    }
+
+    // 6. Portfolio
+    function isValidPortfolioProject(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 150 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 2000 &&
+             data.category is string && data.category.size() >= 2 && data.category.size() <= 80 &&
+             data.completionDate is string && data.completionDate.size() >= 2 && data.completionDate.size() <= 40 &&
+             data.clientName is string && data.clientName.size() <= 120 &&
+             data.imageUrl is string && data.imageUrl.size() <= 500 &&
+             data.demoUrl is string && data.demoUrl.size() <= 500 &&
+             data.attachmentName is string && data.attachmentName.size() <= 150 &&
+             data.allowDownload is bool &&
+             data.technologies is string && data.technologies.size() >= 1 && data.technologies.size() <= 400 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'published' || data.status == 'draft' || data.status == 'archived') &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /portfolio/{portfolioId} {
+      allow get: if isValidId(portfolioId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(portfolioId) &&
+                    incoming().keys().hasAll(['id', 'title', 'description', 'category', 'completionDate', 'clientName', 'imageUrl', 'demoUrl', 'attachmentName', 'allowDownload', 'technologies', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'title', 'description', 'category', 'completionDate', 'clientName', 'imageUrl', 'demoUrl', 'attachmentName', 'allowDownload', 'technologies', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidPortfolioProject(incoming()) &&
+                    incoming().id == portfolioId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(portfolioId) && isValidPortfolioProject(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'completionDate', 'clientName', 'imageUrl', 'demoUrl', 'attachmentName', 'allowDownload', 'technologies', 'status', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(portfolioId);
+    }
+
+    // 7. Partners
+    function isValidPartnerItem(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 140 &&
+             data.logoText is string && data.logoText.size() >= 1 && data.logoText.size() <= 20 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 800 &&
+             data.category is string && data.category.size() <= 30 && (data.category == 'ONG' || data.category == 'Entreprises' || data.category == 'Particuliers' || data.category == 'Institutions' || data.category == 'Associations' || data.category == 'Autres') &&
+             data.websiteUrl is string && data.websiteUrl.size() <= 300 &&
+             data.contactInfo is string && data.contactInfo.size() <= 150 &&
+             data.projectCompleted is string && data.projectCompleted.size() >= 2 && data.projectCompleted.size() <= 300 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'active' || data.status == 'inactive') &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /partners/{partnerId} {
+      allow get: if isValidId(partnerId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(partnerId) &&
+                    incoming().keys().hasAll(['id', 'name', 'logoText', 'description', 'category', 'websiteUrl', 'contactInfo', 'projectCompleted', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'name', 'logoText', 'description', 'category', 'websiteUrl', 'contactInfo', 'projectCompleted', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidPartnerItem(incoming()) &&
+                    incoming().id == partnerId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(partnerId) && isValidPartnerItem(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'logoText', 'description', 'category', 'websiteUrl', 'contactInfo', 'projectCompleted', 'status', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(partnerId);
+    }
+
+    // 8. Testimonials
+    function isValidTestimonialItem(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120 &&
+             data.authorRole is string && data.authorRole.size() >= 2 && data.authorRole.size() <= 100 &&
+             data.organization is string && data.organization.size() <= 120 &&
+             data.content is string && data.content.size() >= 10 && data.content.size() <= 1500 &&
+             data.serviceConcerned is string && data.serviceConcerned.size() >= 2 && data.serviceConcerned.size() <= 140 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'pending' || data.status == 'published' || data.status == 'rejected') &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /testimonials/{testimonialId} {
+      allow get: if isValidId(testimonialId) && (existing().isPublic == true || (isSignedIn() && existing().authorId == request.auth.uid) || isAdmin());
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().authorId == request.auth.uid) || isVerifiedAdminEmail();
+      allow create: if isVerifiedUser() && isValidId(testimonialId) &&
+                    incoming().keys().hasAll(['id', 'authorId', 'authorName', 'authorRole', 'organization', 'content', 'serviceConcerned', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'authorId', 'authorName', 'authorRole', 'organization', 'content', 'serviceConcerned', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidTestimonialItem(incoming()) &&
+                    incoming().id == testimonialId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (incoming().authorId == request.auth.uid && incoming().status == 'pending' && incoming().isPublic == false) ||
+                      isAdmin()
+                    );
+      allow update: if isAdmin() && isValidId(testimonialId) && isValidTestimonialItem(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().authorId == existing().authorId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['authorName', 'authorRole', 'organization', 'content', 'serviceConcerned', 'status', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(testimonialId);
+    }
+
+    // 9. Service Requests
+    function isValidServiceRequest(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.referenceCode is string && data.referenceCode.size() >= 3 && data.referenceCode.size() <= 40 &&
+             data.clientId is string && data.clientId.size() >= 1 && data.clientId.size() <= 128 && data.clientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 120 &&
+             data.clientEmail is string && data.clientEmail.size() >= 3 && data.clientEmail.size() <= 150 &&
+             data.serviceId is string && data.serviceId.size() >= 1 && data.serviceId.size() <= 128 &&
+             data.serviceTitle is string && data.serviceTitle.size() >= 2 && data.serviceTitle.size() <= 150 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 3000 &&
+             data.priority is string && data.priority.size() <= 20 && (data.priority == 'Normale' || data.priority == 'Haute' || data.priority == 'Urgente') &&
+             data.desiredDeadline is string && data.desiredDeadline.size() >= 1 && data.desiredDeadline.size() <= 100 &&
+             data.indicativeBudget is string && data.indicativeBudget.size() <= 100 &&
+             data.attachmentName is string && data.attachmentName.size() <= 200 &&
+             data.comments is string && data.comments.size() <= 1000 &&
+             data.status is string && data.status.size() <= 30 && (
+               data.status == 'draft' || data.status == 'submitted' || data.status == 'reviewing' ||
+               data.status == 'info_needed' || data.status == 'quoted' || data.status == 'waiting_client' ||
+               data.status == 'accepted' || data.status == 'in_progress' || data.status == 'completed' || data.status == 'cancelled'
+             ) &&
+             data.adminNotes is string && data.adminNotes.size() <= 2000 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /serviceRequests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId) && (existing().clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(requestId) &&
+                    incoming().keys().hasAll(['id', 'referenceCode', 'clientId', 'clientName', 'clientEmail', 'serviceId', 'serviceTitle', 'description', 'priority', 'desiredDeadline', 'indicativeBudget', 'attachmentName', 'comments', 'status', 'adminNotes', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'referenceCode', 'clientId', 'clientName', 'clientEmail', 'serviceId', 'serviceTitle', 'description', 'priority', 'desiredDeadline', 'indicativeBudget', 'attachmentName', 'comments', 'status', 'adminNotes', 'createdAt', 'updatedAt']) &&
+                    isValidServiceRequest(incoming()) &&
+                    incoming().id == requestId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (incoming().clientId == request.auth.uid && incoming().status == 'submitted' && incoming().adminNotes == '') ||
+                      isAdmin()
+                    );
+      allow update: if isVerifiedUser() && isValidId(requestId) && isValidServiceRequest(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().clientId == existing().clientId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time && (
+                      (existing().clientId == request.auth.uid && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['comments', 'status', 'updatedAt']) && (incoming().status == existing().status || incoming().status == 'cancelled')) ||
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNotes', 'comments', 'updatedAt']))
+                    );
+      allow delete: if isAdmin() && isValidId(requestId);
+    }
+
+    // 10. Quotes & Negotiation
+    function isValidQuoteDocument(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.quoteNumber is string && data.quoteNumber.size() >= 3 && data.quoteNumber.size() <= 40 &&
+             data.clientId is string && data.clientId.size() >= 1 && data.clientId.size() <= 128 && data.clientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 120 &&
+             data.clientEmail is string && data.clientEmail.size() >= 3 && data.clientEmail.size() <= 150 &&
+             data.currency is string && data.currency.size() <= 10 && (data.currency == 'USD' || data.currency == 'CDF') &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 2 && data.itemsSummary.size() <= 4000 &&
+             data.itemsCount is number && data.itemsCount >= 1 &&
+             data.initialSubtotal is number && data.initialSubtotal >= 0 &&
+             data.discountRequestedAmount is number && data.discountRequestedAmount >= 0 &&
+             data.discountJustification is string && data.discountJustification.size() <= 1000 &&
+             data.discountGrantedAmount is number && data.discountGrantedAmount >= 0 &&
+             data.finalTotal is number && data.finalTotal >= 0 &&
+             data.decisionAuthor is string && data.decisionAuthor.size() <= 150 &&
+             data.validityDays is number && data.validityDays >= 1 &&
+             data.conditions is string && data.conditions.size() >= 2 && data.conditions.size() <= 1000 &&
+             data.status is string && data.status.size() <= 30 && (
+               data.status == 'draft' || data.status == 'sent' || data.status == 'viewed' ||
+               data.status == 'discount_requested' || data.status == 'discount_approved' ||
+               data.status == 'discount_rejected' || data.status == 'accepted' ||
+               data.status == 'rejected' || data.status == 'expired'
+             ) &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /quotes/{quoteId} {
+      allow get: if isSignedIn() && isValidId(quoteId) && (existing().clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(quoteId) &&
+                    incoming().keys().hasAll(['id', 'quoteNumber', 'clientId', 'clientName', 'clientEmail', 'currency', 'itemsSummary', 'itemsCount', 'initialSubtotal', 'discountRequestedAmount', 'discountJustification', 'discountGrantedAmount', 'finalTotal', 'decisionAuthor', 'validityDays', 'conditions', 'status', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'quoteNumber', 'clientId', 'clientName', 'clientEmail', 'currency', 'itemsSummary', 'itemsCount', 'initialSubtotal', 'discountRequestedAmount', 'discountJustification', 'discountGrantedAmount', 'finalTotal', 'decisionAuthor', 'validityDays', 'conditions', 'status', 'createdAt', 'updatedAt']) &&
+                    isValidQuoteDocument(incoming()) &&
+                    incoming().id == quoteId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (incoming().clientId == request.auth.uid && incoming().status == 'sent' && incoming().discountGrantedAmount == 0 && incoming().finalTotal == incoming().initialSubtotal && incoming().decisionAuthor == '') ||
+                      isAdmin()
+                    );
+      allow update: if isVerifiedUser() && isValidId(quoteId) && isValidQuoteDocument(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().clientId == existing().clientId &&
+                    incoming().quoteNumber == existing().quoteNumber &&
+                    incoming().initialSubtotal == existing().initialSubtotal &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time && (
+                      // Action 1: Client accepts or rejects quote (Terminal State Lock prevents modifying already accepted/rejected/expired quotes)
+                      (existing().clientId == request.auth.uid && existing().status != 'accepted' && existing().status != 'rejected' && existing().status != 'expired' &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+                       (incoming().status == 'accepted' || incoming().status == 'rejected')) ||
+                      // Action 2: Client requests a discount
+                      (existing().clientId == request.auth.uid && existing().status != 'accepted' && existing().status != 'rejected' && existing().status != 'expired' &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['discountRequestedAmount', 'discountJustification', 'status', 'updatedAt']) &&
+                       incoming().status == 'discount_requested') ||
+                      // Action 3: Admin grants or refuses discount or updates quote status
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['discountGrantedAmount', 'finalTotal', 'decisionAuthor', 'status', 'conditions', 'validityDays', 'updatedAt']))
+                    );
+      allow delete: if isAdmin() && isValidId(quoteId);
+    }
+
+    // 11. Subscription Plans
+    function isValidSubscriptionPlan(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.code is string && data.code.size() >= 2 && data.code.size() <= 40 &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+             data.durationLabel is string && data.durationLabel.size() >= 2 && data.durationLabel.size() <= 60 &&
+             data.durationDays is number && data.durationDays >= 1 &&
+             data.priceUSD is number && data.priceUSD >= 0 &&
+             data.priceCDF is number && data.priceCDF >= 0 &&
+             data.features is string && data.features.size() >= 5 && data.features.size() <= 1500 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'active' || data.status == 'suspended') &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /subscriptionPlans/{planId} {
+      allow get: if isValidId(planId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(planId) &&
+                    incoming().keys().hasAll(['id', 'code', 'name', 'durationLabel', 'durationDays', 'priceUSD', 'priceCDF', 'features', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'code', 'name', 'durationLabel', 'durationDays', 'priceUSD', 'priceCDF', 'features', 'status', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidSubscriptionPlan(incoming()) &&
+                    incoming().id == planId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(planId) && isValidSubscriptionPlan(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['code', 'name', 'durationLabel', 'durationDays', 'priceUSD', 'priceCDF', 'features', 'status', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(planId);
+    }
+
+    // 12. Client Subscriptions
+    function isValidClientSubscription(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientId is string && data.clientId.size() >= 1 && data.clientId.size() <= 128 && data.clientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 120 &&
+             data.clientEmail is string && data.clientEmail.size() >= 3 && data.clientEmail.size() <= 150 &&
+             data.planId is string && data.planId.size() >= 1 && data.planId.size() <= 128 &&
+             data.planName is string && data.planName.size() >= 2 && data.planName.size() <= 100 &&
+             data.pricePaid is number && data.pricePaid >= 0 &&
+             data.currency is string && data.currency.size() <= 10 && (data.currency == 'USD' || data.currency == 'CDF') &&
+             data.paymentReference is string && data.paymentReference.size() >= 2 && data.paymentReference.size() <= 120 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'pending' || data.status == 'active' || data.status == 'expired' || data.status == 'cancelled' || data.status == 'suspended') &&
+             data.startDateIso is string && data.startDateIso.size() <= 40 &&
+             data.endDateIso is string && data.endDateIso.size() <= 40 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /subscriptions/{subscriptionId} {
+      allow get: if isSignedIn() && isValidId(subscriptionId) && (existing().clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(subscriptionId) &&
+                    incoming().keys().hasAll(['id', 'clientId', 'clientName', 'clientEmail', 'planId', 'planName', 'pricePaid', 'currency', 'paymentReference', 'status', 'startDateIso', 'endDateIso', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'clientId', 'clientName', 'clientEmail', 'planId', 'planName', 'pricePaid', 'currency', 'paymentReference', 'status', 'startDateIso', 'endDateIso', 'createdAt', 'updatedAt']) &&
+                    isValidClientSubscription(incoming()) &&
+                    incoming().id == subscriptionId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      // Clients can only request a subscription in 'pending' status; never self-activate!
+                      (incoming().clientId == request.auth.uid && incoming().status == 'pending') ||
+                      isAdmin()
+                    );
+      allow update: if isAdmin() && isValidId(subscriptionId) && isValidClientSubscription(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().clientId == existing().clientId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'startDateIso', 'endDateIso', 'paymentReference', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(subscriptionId);
+    }
+
+    // 13. Payments
+    function isValidPaymentRecord(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientId is string && data.clientId.size() >= 1 && data.clientId.size() <= 128 && data.clientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 120 &&
+             data.amount is number && data.amount >= 0 &&
+             data.currency is string && data.currency.size() <= 10 && (data.currency == 'USD' || data.currency == 'CDF') &&
+             data.method is string && data.method.size() >= 2 && data.method.size() <= 80 &&
+             data.reference is string && data.reference.size() >= 2 && data.reference.size() <= 120 &&
+             data.targetType is string && data.targetType.size() <= 30 && (data.targetType == 'subscription' || data.targetType == 'quote' || data.targetType == 'service') &&
+             data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+             data.status is string && data.status.size() <= 30 && (data.status == 'pending_verification' || data.status == 'confirmed' || data.status == 'rejected') &&
+             data.verifiedBy is string && data.verifiedBy.size() <= 150 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /payments/{paymentId} {
+      allow get: if isSignedIn() && isValidId(paymentId) && (existing().clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(paymentId) &&
+                    incoming().keys().hasAll(['id', 'clientId', 'clientName', 'amount', 'currency', 'method', 'reference', 'targetType', 'targetId', 'status', 'verifiedBy', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'clientId', 'clientName', 'amount', 'currency', 'method', 'reference', 'targetType', 'targetId', 'status', 'verifiedBy', 'createdAt', 'updatedAt']) &&
+                    isValidPaymentRecord(incoming()) &&
+                    incoming().id == paymentId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (incoming().clientId == request.auth.uid && incoming().status == 'pending_verification' && incoming().verifiedBy == '') ||
+                      isAdmin()
+                    );
+      allow update: if isAdmin() && isValidId(paymentId) && isValidPaymentRecord(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().clientId == existing().clientId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'verifiedBy', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(paymentId);
+    }
+
+    // 14. Document Templates
+    function isValidDocumentTemplate(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 150 &&
+             data.category is string && data.category.size() <= 30 && (data.category == 'CV' || data.category == 'Lettres' || data.category == 'Rapports' || data.category == 'Documents') &&
+             data.subCategory is string && data.subCategory.size() >= 2 && data.subCategory.size() <= 100 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 500 &&
+             data.defaultContentHtml is string && data.defaultContentHtml.size() >= 10 && data.defaultContentHtml.size() <= 20000 &&
+             data.isPublic is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /templates/{templateId} {
+      allow get: if isValidId(templateId) && (existing().isPublic == true || isAdmin());
+      allow list: if existing().isPublic == true || isVerifiedAdminEmail();
+      allow create: if isAdmin() && isValidId(templateId) &&
+                    incoming().keys().hasAll(['id', 'title', 'category', 'subCategory', 'description', 'defaultContentHtml', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'title', 'category', 'subCategory', 'description', 'defaultContentHtml', 'isPublic', 'createdAt', 'updatedAt']) &&
+                    isValidDocumentTemplate(incoming()) &&
+                    incoming().id == templateId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(templateId) && isValidDocumentTemplate(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'subCategory', 'description', 'defaultContentHtml', 'isPublic', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(templateId);
+    }
+
+    // 15. Client Saved Documents
+    function isValidClientDocument(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.contentHtml is string && data.contentHtml.size() >= 1 && data.contentHtml.size() <= 50000 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /documents/{documentId} {
+      allow get: if isSignedIn() && isValidId(documentId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(documentId) &&
+                    incoming().keys().hasAll(['id', 'ownerId', 'title', 'category', 'contentHtml', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'ownerId', 'title', 'category', 'contentHtml', 'createdAt', 'updatedAt']) &&
+                    isValidClientDocument(incoming()) &&
+                    incoming().id == documentId &&
+                    incoming().ownerId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(documentId) && isValidClientDocument(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().ownerId == existing().ownerId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    existing().ownerId == request.auth.uid &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'contentHtml', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(documentId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // 16. Training Progress
+    function isValidTrainingProgress(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.moduleId is string && data.moduleId.size() >= 1 && data.moduleId.size() <= 80 &&
+             data.moduleTitle is string && data.moduleTitle.size() >= 2 && data.moduleTitle.size() <= 150 &&
+             data.score is number && data.score >= 0 && data.score <= 100 &&
+             data.status is string && data.status.size() <= 20 && (data.status == 'in_progress' || data.status == 'completed') &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /trainingProgress/{progressId} {
+      allow get: if isSignedIn() && isValidId(progressId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(progressId) &&
+                    incoming().keys().hasAll(['id', 'userId', 'moduleId', 'moduleTitle', 'score', 'status', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'userId', 'moduleId', 'moduleTitle', 'score', 'status', 'createdAt', 'updatedAt']) &&
+                    isValidTrainingProgress(incoming()) &&
+                    incoming().id == progressId &&
+                    incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(progressId) && isValidTrainingProgress(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    existing().userId == request.auth.uid &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['score', 'status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(progressId);
+    }
+
+    // 17. Direct Messages (Client <-> Admin)
+    function isValidDirectMessage(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.threadClientId is string && data.threadClientId.size() >= 1 && data.threadClientId.size() <= 128 && data.threadClientId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.threadClientName is string && data.threadClientName.size() >= 2 && data.threadClientName.size() <= 120 &&
+             data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 && data.senderId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 120 &&
+             data.senderRole is string && data.senderRole.size() <= 20 && (data.senderRole == 'client' || data.senderRole == 'admin') &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 3000 &&
+             data.attachmentName is string && data.attachmentName.size() <= 200 &&
+             data.isRead is bool &&
+             data.isArchived is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /messages/{messageId} {
+      allow get: if isSignedIn() && isValidId(messageId) && (existing().threadClientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().threadClientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(messageId) &&
+                    incoming().keys().hasAll(['id', 'threadClientId', 'threadClientName', 'senderId', 'senderName', 'senderRole', 'content', 'attachmentName', 'isRead', 'isArchived', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'threadClientId', 'threadClientName', 'senderId', 'senderName', 'senderRole', 'content', 'attachmentName', 'isRead', 'isArchived', 'createdAt', 'updatedAt']) &&
+                    isValidDirectMessage(incoming()) &&
+                    incoming().id == messageId &&
+                    incoming().senderId == request.auth.uid &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      (incoming().threadClientId == request.auth.uid && incoming().senderRole == 'client') ||
+                      (isAdmin() && incoming().senderRole == 'admin')
+                    );
+      allow update: if isVerifiedUser() && isValidId(messageId) && isValidDirectMessage(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().threadClientId == existing().threadClientId &&
+                    incoming().senderId == existing().senderId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time && (
+                      (existing().threadClientId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead', 'updatedAt'])) ||
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['isRead', 'isArchived', 'updatedAt']))
+                    );
+      allow delete: if isAdmin() && isValidId(messageId);
+    }
+
+    // 18. Notifications
+    function isValidAppNotification(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.recipientId is string && data.recipientId.size() >= 1 && data.recipientId.size() <= 128 &&
+             data.type is string && data.type.size() >= 2 && data.type.size() <= 60 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 150 &&
+             data.message is string && data.message.size() >= 2 && data.message.size() <= 600 &&
+             data.relatedId is string && data.relatedId.size() <= 128 &&
+             data.isRead is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isValidId(notificationId) && (existing().recipientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().recipientId == request.auth.uid || isVerifiedAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(notificationId) &&
+                    incoming().keys().hasAll(['id', 'recipientId', 'type', 'title', 'message', 'relatedId', 'isRead', 'createdAt', 'updatedAt']) &&
+                    incoming().keys().hasOnly(['id', 'recipientId', 'type', 'title', 'message', 'relatedId', 'isRead', 'createdAt', 'updatedAt']) &&
+                    isValidAppNotification(incoming()) &&
+                    incoming().id == notificationId &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time &&
+                    (incoming().recipientId == request.auth.uid || incoming().recipientId == 'ADMIN' || isAdmin());
+      allow update: if isVerifiedUser() && isValidId(notificationId) && isValidAppNotification(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().recipientId == existing().recipientId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    (existing().recipientId == request.auth.uid || isAdmin()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['isRead', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(notificationId);
+    }
+
+    // 19. Audit Logs (Append-Only)
+    function isValidAuditLog(data) {
+      return data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 && data.actorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.actorEmail is string && data.actorEmail.size() >= 3 && data.actorEmail.size() <= 150 &&
+             data.action is string && data.action.size() >= 2 && data.action.size() <= 100 &&
+             data.targetType is string && data.targetType.size() >= 2 && data.targetType.size() <= 80 &&
+             data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+             data.details is string && data.details.size() >= 2 && data.details.size() <= 1500 &&
+             data.createdAt is timestamp;
+    }
+    match /auditLogs/{logId} {
+      allow get: if isAdmin() && isValidId(logId);
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isVerifiedUser() && isValidId(logId) &&
+                    incoming().keys().hasAll(['id', 'actorId', 'actorEmail', 'action', 'targetType', 'targetId', 'details', 'createdAt']) &&
+                    incoming().keys().hasOnly(['id', 'actorId', 'actorEmail', 'action', 'targetType', 'targetId', 'details', 'createdAt']) &&
+                    isValidAuditLog(incoming()) &&
+                    incoming().id == logId &&
+                    incoming().actorId == request.auth.uid &&
+                    incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

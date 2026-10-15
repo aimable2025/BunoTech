@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bunoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bunoGrad)" />
+  <rect x="44" y="44" width="424" height="424" rx="64" fill="none" stroke="#38BDF8" stroke-width="6" stroke-opacity="0.35" />
+  <path d="M148 140 H268 C312 140 340 164 340 202 C340 228 324 246 298 254 C330 262 350 284 350 316 C350 358 318 384 268 384 H148 Z M204 186 V236 H258 C276 236 288 226 288 211 C288 196 276 186 258 186 Z M204 278 V338 H264 C284 338 296 326 296 308 C296 290 284 278 264 278 Z" fill="#FFFFFF" />
+  <circle cx="376" cy="148" r="22" fill="#38BDF8" />
+</svg>

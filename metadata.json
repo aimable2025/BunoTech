@@ -1,0 +1,6 @@
+{
+  "name": "Aimable Maombi Bunoti — BUNO Tech",
+  "description": "Plateforme professionnelle PWA de BUNO Tech : portfolio, demande de services, calculateur de devis, espace client, outils bureautiques premium, formateur informatique et assistant IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

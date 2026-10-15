@@ -1,0 +1,456 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator privilege record.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 150 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile with isolated PII access.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 150 },
+        "phone": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "organization": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["client", "admin"] },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "acceptedTerms": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "email", "phone", "organization", "role", "status", "acceptedTerms", "createdAt", "updatedAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global configurable identity, CV, and contact parameters for BUNO Tech.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "brandName": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "tagline": { "type": "string", "minLength": 2, "maxLength": 300 },
+        "positioning": { "type": "string", "minLength": 2, "maxLength": 500 },
+        "bioNarrative": { "type": "string", "minLength": 10, "maxLength": 5000 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "whatsapp": { "type": "string", "minLength": 3, "maxLength": 50 },
+        "github": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "youtube": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "facebook": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "linkedin": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "twitter": { "type": "string", "minLength": 0, "maxLength": 300 },
+        "cvSummary": { "type": "string", "minLength": 0, "maxLength": 3000 },
+        "cvObjectives": { "type": "string", "minLength": 0, "maxLength": 2000 },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerName", "brandName", "tagline", "positioning", "bioNarrative", "email", "whatsapp", "github", "youtube", "facebook", "linkedin", "twitter", "cvSummary", "cvObjectives", "isPublic", "updatedAt"]
+    },
+    "ServiceItem": {
+      "title": "ServiceItem",
+      "description": "Dynamic service offering managed by the administrator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "iconName": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "shortDescription": { "type": "string", "minLength": 5, "maxLength": 400 },
+        "includedFeatures": { "type": "string", "minLength": 2, "maxLength": 2000 },
+        "indicativePrice": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "estimatedDelay": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "availability": { "type": "string", "enum": ["available", "busy", "suspended"] },
+        "orderIndex": { "type": "number" },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "iconName", "category", "shortDescription", "includedFeatures", "indicativePrice", "estimatedDelay", "availability", "orderIndex", "isPublic", "createdAt", "updatedAt"]
+    },
+    "PricingRule": {
+      "title": "PricingRule",
+      "description": "Internal tariff rule used by the automatic quote calculator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "serviceName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "itemType": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "format": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "unitPriceUSD": { "type": "number" },
+        "unitPriceCDF": { "type": "number" },
+        "validityPeriod": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "conditions": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "available": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "serviceName", "itemType", "unit", "format", "unitPriceUSD", "unitPriceCDF", "validityPeriod", "conditions", "available", "isPublic", "createdAt", "updatedAt"]
+    },
+    "PortfolioProject": {
+      "title": "PortfolioProject",
+      "description": "Real portfolio realization item.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 150 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 2000 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "completionDate": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "clientName": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "imageUrl": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "demoUrl": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "attachmentName": { "type": "string", "minLength": 0, "maxLength": 150 },
+        "allowDownload": { "type": "boolean" },
+        "technologies": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "status": { "type": "string", "enum": ["published", "draft", "archived"] },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "description", "category", "completionDate", "clientName", "imageUrl", "demoUrl", "attachmentName", "allowDownload", "technologies", "status", "isPublic", "createdAt", "updatedAt"]
+    },
+    "PartnerItem": {
+      "title": "PartnerItem",
+      "description": "Partner organization or client reference.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "logoText": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 800 },
+        "category": { "type": "string", "enum": ["ONG", "Entreprises", "Particuliers", "Institutions", "Associations", "Autres"] },
+        "websiteUrl": { "type": "string", "minLength": 0, "maxLength": 300 },
+        "contactInfo": { "type": "string", "minLength": 0, "maxLength": 150 },
+        "projectCompleted": { "type": "string", "minLength": 2, "maxLength": 300 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "logoText", "description", "category", "websiteUrl", "contactInfo", "projectCompleted", "status", "isPublic", "createdAt", "updatedAt"]
+    },
+    "TestimonialItem": {
+      "title": "TestimonialItem",
+      "description": "Verifiable client testimonial requiring admin validation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "authorRole": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "organization": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 1500 },
+        "serviceConcerned": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "status": { "type": "string", "enum": ["pending", "published", "rejected"] },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorId", "authorName", "authorRole", "organization", "content", "serviceConcerned", "status", "isPublic", "createdAt", "updatedAt"]
+    },
+    "ServiceRequest": {
+      "title": "ServiceRequest",
+      "description": "Client request for a technical service.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "referenceCode": { "type": "string", "minLength": 3, "maxLength": 40 },
+        "clientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "clientEmail": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "serviceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "serviceTitle": { "type": "string", "minLength": 2, "maxLength": 150 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 3000 },
+        "priority": { "type": "string", "enum": ["Normale", "Haute", "Urgente"] },
+        "desiredDeadline": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "indicativeBudget": { "type": "string", "minLength": 0, "maxLength": 100 },
+        "attachmentName": { "type": "string", "minLength": 0, "maxLength": 200 },
+        "comments": { "type": "string", "minLength": 0, "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["draft", "submitted", "reviewing", "info_needed", "quoted", "waiting_client", "accepted", "in_progress", "completed", "cancelled"] },
+        "adminNotes": { "type": "string", "minLength": 0, "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "referenceCode", "clientId", "clientName", "clientEmail", "serviceId", "serviceTitle", "description", "priority", "desiredDeadline", "indicativeBudget", "attachmentName", "comments", "status", "adminNotes", "createdAt", "updatedAt"]
+    },
+    "QuoteDocument": {
+      "title": "QuoteDocument",
+      "description": "Calculated quote with full negotiation and discount audit trail.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "quoteNumber": { "type": "string", "minLength": 3, "maxLength": 40 },
+        "clientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "clientEmail": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "currency": { "type": "string", "enum": ["USD", "CDF"] },
+        "itemsSummary": { "type": "string", "minLength": 2, "maxLength": 4000 },
+        "itemsCount": { "type": "number" },
+        "initialSubtotal": { "type": "number" },
+        "discountRequestedAmount": { "type": "number" },
+        "discountJustification": { "type": "string", "minLength": 0, "maxLength": 1000 },
+        "discountGrantedAmount": { "type": "number" },
+        "finalTotal": { "type": "number" },
+        "decisionAuthor": { "type": "string", "minLength": 0, "maxLength": 150 },
+        "validityDays": { "type": "number" },
+        "conditions": { "type": "string", "minLength": 2, "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["draft", "sent", "viewed", "discount_requested", "discount_approved", "discount_rejected", "accepted", "rejected", "expired"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "quoteNumber", "clientId", "clientName", "clientEmail", "currency", "itemsSummary", "itemsCount", "initialSubtotal", "discountRequestedAmount", "discountJustification", "discountGrantedAmount", "finalTotal", "decisionAuthor", "validityDays", "conditions", "status", "createdAt", "updatedAt"]
+    },
+    "SubscriptionPlan": {
+      "title": "SubscriptionPlan",
+      "description": "Subscription plan configuration (1 day, 1 week, 1 month, 1 year, 3 years).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "code": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "durationLabel": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "durationDays": { "type": "number" },
+        "priceUSD": { "type": "number" },
+        "priceCDF": { "type": "number" },
+        "features": { "type": "string", "minLength": 5, "maxLength": 1500 },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "code", "name", "durationLabel", "durationDays", "priceUSD", "priceCDF", "features", "status", "isPublic", "createdAt", "updatedAt"]
+    },
+    "ClientSubscription": {
+      "title": "ClientSubscription",
+      "description": "Verifiable client subscription record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "clientEmail": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "planId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "planName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "pricePaid": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "CDF"] },
+        "paymentReference": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "status": { "type": "string", "enum": ["pending", "active", "expired", "cancelled", "suspended"] },
+        "startDateIso": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "endDateIso": { "type": "string", "minLength": 0, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "clientId", "clientName", "clientEmail", "planId", "planName", "pricePaid", "currency", "paymentReference", "status", "startDateIso", "endDateIso", "createdAt", "updatedAt"]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Verifiable payment transaction record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "CDF"] },
+        "method": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "reference": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "targetType": { "type": "string", "enum": ["subscription", "quote", "service"] },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending_verification", "confirmed", "rejected"] },
+        "verifiedBy": { "type": "string", "minLength": 0, "maxLength": 150 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "clientId", "clientName", "amount", "currency", "method", "reference", "targetType", "targetId", "status", "verifiedBy", "createdAt", "updatedAt"]
+    },
+    "DocumentTemplate": {
+      "title": "DocumentTemplate",
+      "description": "Professional document template in the library.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 150 },
+        "category": { "type": "string", "enum": ["CV", "Lettres", "Rapports", "Documents"] },
+        "subCategory": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 500 },
+        "defaultContentHtml": { "type": "string", "minLength": 10, "maxLength": 20000 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "category", "subCategory", "description", "defaultContentHtml", "isPublic", "createdAt", "updatedAt"]
+    },
+    "ClientDocument": {
+      "title": "ClientDocument",
+      "description": "Saved personal document created in the rich text processor.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "contentHtml": { "type": "string", "minLength": 1, "maxLength": 50000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "category", "contentHtml", "createdAt", "updatedAt"]
+    },
+    "TrainingProgress": {
+      "title": "TrainingProgress",
+      "description": "Interactive IT trainer module completion and quiz score.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "moduleId": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "moduleTitle": { "type": "string", "minLength": 2, "maxLength": 150 },
+        "score": { "type": "number" },
+        "status": { "type": "string", "enum": ["in_progress", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "moduleId", "moduleTitle", "score", "status", "createdAt", "updatedAt"]
+    },
+    "DirectMessage": {
+      "title": "DirectMessage",
+      "description": "Direct message between client and administrator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "threadClientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "threadClientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "senderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "senderRole": { "type": "string", "enum": ["client", "admin"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 3000 },
+        "attachmentName": { "type": "string", "minLength": 0, "maxLength": 200 },
+        "isRead": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "threadClientId", "threadClientName", "senderId", "senderName", "senderRole", "content", "attachmentName", "isRead", "isArchived", "createdAt", "updatedAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Internal system notification for client or administrator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 150 },
+        "message": { "type": "string", "minLength": 2, "maxLength": 600 },
+        "relatedId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "recipientId", "type", "title", "message", "relatedId", "isRead", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable audit trail record for sensitive operations.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorEmail": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "action": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "targetType": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "details": { "type": "string", "minLength": 2, "maxLength": 1500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorId", "actorEmail", "action", "targetType", "targetId", "details", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Administrator role lookup documents."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authenticated user profiles with PII restricted to owner or admin."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Public site and CV settings managed by admin."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/ServiceItem" },
+      "description": "Dynamic services catalog."
+    },
+    "/pricing/{pricingId}": {
+      "schema": { "$ref": "#/entities/PricingRule" },
+      "description": "Internal tariff rules for automatic quote calculation."
+    },
+    "/portfolio/{portfolioId}": {
+      "schema": { "$ref": "#/entities/PortfolioProject" },
+      "description": "Real portfolio items and downloadable assets."
+    },
+    "/partners/{partnerId}": {
+      "schema": { "$ref": "#/entities/PartnerItem" },
+      "description": "Verified partners and organizations."
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/TestimonialItem" },
+      "description": "Client testimonials validated by admin."
+    },
+    "/serviceRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/ServiceRequest" },
+      "description": "Client service requests and contact inquiries."
+    },
+    "/quotes/{quoteId}": {
+      "schema": { "$ref": "#/entities/QuoteDocument" },
+      "description": "Generated quotes and discount negotiation records."
+    },
+    "/subscriptionPlans/{planId}": {
+      "schema": { "$ref": "#/entities/SubscriptionPlan" },
+      "description": "Available subscription formulas."
+    },
+    "/subscriptions/{subscriptionId}": {
+      "schema": { "$ref": "#/entities/ClientSubscription" },
+      "description": "Active and historical client subscriptions."
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentRecord" },
+      "description": "Payment verification records."
+    },
+    "/templates/{templateId}": {
+      "schema": { "$ref": "#/entities/DocumentTemplate" },
+      "description": "Professional document templates library."
+    },
+    "/documents/{documentId}": {
+      "schema": { "$ref": "#/entities/ClientDocument" },
+      "description": "Client saved rich-text documents."
+    },
+    "/trainingProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/TrainingProgress" },
+      "description": "Client interactive IT training progress."
+    },
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/DirectMessage" },
+      "description": "Direct messaging between client and administrator."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Real-time notifications for clients and admin."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Append-only security audit trail."
+    }
+  }
+}
