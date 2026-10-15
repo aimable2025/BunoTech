@@ -27,8 +27,8 @@ export const TRANSLATIONS: Record<
     navHome: 'Accueil',
     navServices: 'Services',
     navAbout: 'À propos',
-    navPortfolio: 'Portfolio',
     navPartners: 'Partenaires',
+    navPortfolio: 'Réalisations',
     navTestimonials: 'Témoignages',
     navContact: 'Contact',
     navQuoteCalc: 'Devis',
@@ -40,9 +40,9 @@ export const TRANSLATIONS: Record<
     ctaCreateAccount: 'Créer mon compte client',
     ctaSignIn: 'Connexion',
     ctaSignOut: 'Déconnexion',
-    heroSubtitle: 'Informaticien autodidacte, développeur, formateur et consultant en solutions numériques.',
+    heroSubtitle: 'Building New Opportunities through Technology',
     heroValueProp:
-      'Créer des solutions technologiques utiles, accessibles et adaptées aux besoins réels des particuliers, professionnels, ONG et entreprises.',
+      'Conception et développement de solutions informatiques adaptées aux particuliers, entreprises, ONG et institutions.',
   },
   en: {
     navHome: 'Home',

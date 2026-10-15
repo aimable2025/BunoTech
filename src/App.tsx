@@ -49,6 +49,7 @@ import {
   Target,
   Trash2,
   UserCheck,
+  Users,
   Wrench,
   X,
 } from 'lucide-react';
@@ -170,6 +171,7 @@ export default function App() {
   // Portfolio & Partners Filters
   const [portfolioFilter, setPortfolioFilter] = useState<string>('ALL');
   const [partnerFilter, setPartnerFilter] = useState<string>('ALL');
+  const [aboutTab, setAboutTab] = useState<'company' | 'founder'>('company');
 
   // Quote Calculator State (Section 16)
   const [calcCurrency, setCalcCurrency] = useState<'USD' | 'CDF'>('USD');
@@ -716,22 +718,32 @@ export default function App() {
       {/* TOP NAVIGATION BAR — Strict 3-Zone Contract */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Zone 1: Single text element wordmark */}
+          {/* Zone 1: BUNO Tech Corporate Brand Wordmark */}
           <button
             type="button"
             onClick={() => setCurrentView('home')}
-            className="text-lg font-extrabold tracking-tight text-slate-950 font-display whitespace-nowrap cursor-pointer"
+            className="flex items-center gap-2.5 text-left cursor-pointer group shrink-0"
           >
-            {settings.brandName}
+            <div className="w-8 h-8 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center font-display group-hover:bg-sky-600 transition-colors">
+              BT
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base font-extrabold tracking-tight text-slate-950 font-display leading-none">
+                {settings.brandName}
+              </span>
+              <span className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5 hidden sm:block">
+                Solutions Numériques
+              </span>
+            </div>
           </button>
 
-          {/* Zone 2: 5-6 Clean Single-Line Text Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-600">
+          {/* Zone 2: Ordered Navigation Structure (Accueil -> Services -> À propos -> Partenaires -> Réalisations -> Témoignages -> Contact -> Premium) */}
+          <nav className="hidden xl:flex items-center gap-5 text-xs font-semibold text-slate-600">
             <button
               type="button"
               onClick={() => setCurrentView('home')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'home' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'home' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
               {t.navHome}
@@ -740,7 +752,7 @@ export default function App() {
               type="button"
               onClick={() => setCurrentView('services')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'services' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'services' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
               {t.navServices}
@@ -749,46 +761,55 @@ export default function App() {
               type="button"
               onClick={() => setCurrentView('about')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'about' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'about' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
               {t.navAbout}
             </button>
             <button
               type="button"
+              onClick={() => setCurrentView('partners')}
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
+                currentView === 'partners' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
+              }`}
+            >
+              {t.navPartners}
+            </button>
+            <button
+              type="button"
               onClick={() => setCurrentView('portfolio')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'portfolio' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'portfolio' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
               {t.navPortfolio}
             </button>
             <button
               type="button"
-              onClick={() => setCurrentView('quote_calculator')}
+              onClick={() => setCurrentView('testimonials')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'quote_calculator' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'testimonials' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
-              {t.navQuoteCalc}
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentView('premium')}
-              className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'premium' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
-              }`}
-            >
-              {t.navPremium}
+              {t.navTestimonials}
             </button>
             <button
               type="button"
               onClick={() => setCurrentView('contact')}
               className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
-                currentView === 'contact' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600' : ''
+                currentView === 'contact' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
               }`}
             >
               {t.navContact}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView('premium')}
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap cursor-pointer ${
+                currentView === 'premium' ? 'text-slate-950 underline underline-offset-8 decoration-2 decoration-sky-600 font-bold' : ''
+              }`}
+            >
+              {t.navPremium}
             </button>
           </nav>
 
@@ -875,12 +896,11 @@ export default function App() {
                 { id: 'home', label: t.navHome },
                 { id: 'services', label: t.navServices },
                 { id: 'about', label: t.navAbout },
-                { id: 'portfolio', label: t.navPortfolio },
                 { id: 'partners', label: t.navPartners },
+                { id: 'portfolio', label: t.navPortfolio },
                 { id: 'testimonials', label: t.navTestimonials },
-                { id: 'quote_calculator', label: t.navQuoteCalc },
-                { id: 'premium', label: t.navPremium },
                 { id: 'contact', label: t.navContact },
+                { id: 'premium', label: t.navPremium },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -889,7 +909,9 @@ export default function App() {
                     setCurrentView(item.id as ViewMode);
                     setMobileMenuOpen(false);
                   }}
-                  className="text-left px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-800"
+                  className={`text-left px-3 py-2 rounded-lg text-slate-800 transition-colors ${
+                    currentView === item.id ? 'bg-sky-50 text-sky-800 font-bold' : 'hover:bg-slate-100'
+                  }`}
                 >
                   {item.label}
                 </button>
@@ -947,28 +969,49 @@ export default function App() {
             <section className="relative bg-slate-950 text-white overflow-hidden border-b border-slate-800">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 <div className="lg:col-span-7 space-y-6">
-                  <div className="text-xs font-medium text-sky-400">
-                    <span>{settings.ownerName}</span>
-                    <span className="mx-2">·</span>
-                    <span>{settings.brandName}</span>
-                    <span className="mx-2">·</span>
-                    <span>Solutions Numériques & Formation</span>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 border border-slate-800 px-3.5 py-1 text-xs font-semibold text-sky-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>BUNO Tech · Solutions Numériques & Prestations Informatiques</span>
                   </div>
 
                   <h1
-                    className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.12]"
+                    className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.15] font-display"
                     style={{ textWrap: 'balance' }}
                   >
-                    {settings.ownerName} — {settings.brandName}
+                    BUNO Tech
+                    <span className="block text-2xl sm:text-3xl text-sky-400 font-semibold mt-1">
+                      Building New Opportunities through Technology
+                    </span>
                   </h1>
 
                   <p className="text-base sm:text-lg text-slate-300 font-medium leading-relaxed max-w-2xl">
-                    {settings.tagline}
+                    Entreprise de prestations de services informatiques, de développement logiciel et de solutions numériques adaptée aux besoins des particuliers, des entreprises et des ONG.
                   </p>
 
                   <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">
-                    {settings.positioning}
+                    Nous accompagnons nos clients dans la numérisation de leurs activités, la création d'outils sur mesure et la maîtrise des technologies au quotidien.
                   </p>
+
+                  {/* Direction Technique & Fondateur - Géré séparément de l'entreprise */}
+                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="text-slate-300">
+                      <span className="text-slate-400">Direction technique :</span>{' '}
+                      <strong className="text-white">{settings.ownerName}</strong>
+                      <span className="text-slate-500 mx-1.5">·</span>
+                      <span className="text-slate-400">Informaticien polyvalent & Lead Développeur</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAboutTab('founder');
+                        setCurrentView('about');
+                      }}
+                      className="text-sky-400 hover:text-sky-300 hover:underline font-semibold cursor-pointer inline-flex items-center gap-1 shrink-0"
+                    >
+                      <span>Profil & CV du fondateur</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   {/* Primary & Secondary CTAs */}
                   <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -1293,399 +1336,531 @@ export default function App() {
           </section>
         )}
 
-        {/* VIEW 3: ABOUT / PROFIL & CV ("Mon parcours") */}
+        {/* VIEW 3: ABOUT / À PROPOS DE BUNO TECH */}
         {currentView === 'about' && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-            {/* Executive Bio & Identity Card */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-b border-slate-200 pb-12">
-              <div className="lg:col-span-7 space-y-5">
-                <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-800">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Goma, République démocratique du Congo</span>
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
-                  {settings.ownerName}
-                </h1>
-                <p className="text-sm sm:text-base font-semibold text-slate-800">
-                  Informaticien polyvalent | Développeur & Concepteur de solutions numériques | Formateur informatique | Support & Systèmes d’information
-                </p>
-                <div className="text-sm sm:text-base text-slate-700 leading-relaxed space-y-3 whitespace-pre-wrap">
-                  {settings.bioNarrative}
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
-                  <p className="text-xs font-mono uppercase tracking-wider text-sky-400">
-                    Démarche Professionnelle Fondamentale
-                  </p>
-                  <p className="text-sm font-bold">
-                    {BUNO_TECH_MANIFEST.professionalApproachMethod}
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    « Considérer l’informatique comme un moyen de résoudre des problèmes concrets et non comme une simple accumulation de technologies. Transformer les besoins réels en solutions accessibles, utiles et évolutives. »
-                  </p>
-                </div>
-              </div>
-
-              {/* Verified Contact & Profile Summary Card */}
-              <div className="lg:col-span-5 rounded-2xl bg-white border border-slate-200 p-6 space-y-5 shadow-xs">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Coordonnées Vérifiées</h2>
-                    <p className="text-xs text-slate-500">Contact direct & Profils publics</p>
-                  </div>
-                  <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                    Disponible
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-slate-500">Localisation</p>
-                      <p className="font-semibold text-slate-900">{BUNO_TECH_MANIFEST.location}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-slate-500">WhatsApp & Téléphone</p>
-                      <a
-                        href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono font-bold text-slate-900 hover:text-sky-700"
-                      >
-                        {settings.whatsapp}
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-slate-500">Email professionnel</p>
-                      <a href={`mailto:${settings.email}`} className="font-mono font-semibold text-slate-900 hover:text-sky-700">
-                        {settings.email}
-                      </a>
-                      <p className="font-mono text-[11px] text-slate-500 mt-0.5">
-                        Personnel : aimablebunoti@gmail.com
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 space-y-2">
-                    <p className="font-bold text-slate-900">Profils et Réseaux Officiels :</p>
-                    <div className="grid grid-cols-1 gap-1.5 text-xs">
-                      <a
-                        href={settings.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sky-700 hover:underline"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>LinkedIn : Aimable Maombi Bunoti</span>
-                      </a>
-                      <a
-                        href={settings.youtube}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-rose-600 hover:underline"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>YouTube : Aimable Buno Tech</span>
-                      </a>
-                      <a
-                        href={settings.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-slate-800 hover:underline font-mono"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>GitHub : Aimable2025</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cvContent = `CURRICULUM VITAE PROFESSIONNEL\n==================================================\n${settings.ownerName}\nInformaticien polyvalent | Développeur | Formateur | Support & SI\nLocalisation : Goma, République démocratique du Congo\nWhatsApp : ${settings.whatsapp}\nEmail : ${settings.email} / aimablebunoti@gmail.com\nLinkedIn : ${settings.linkedin}\nYouTube : ${settings.youtube}\nGitHub : ${settings.github}\n\nPROFIL :\n${settings.bioNarrative}\n\nEXPÉRIENCES PROFESSIONNELLES :\n${REAL_WORK_EXPERIENCES.map((e) => `\n* ${e.title} — ${e.organization} (${e.location}) [${e.period}]\n  ${e.responsibilities.join('\n  - ')}`).join('\n')}\n\nFORMATIONS & DIPLÔMES :\n${REAL_EDUCATION_ITEMS.map((ed) => `* ${ed.period} : ${ed.title} — ${ed.institution} (${ed.location})`).join('\n')}\n\nLANGUES :\n${CV_LANGUAGES.map((l) => `* ${l.language} : ${l.level}`).join('\n')}`;
-                        const blob = new Blob([cvContent], { type: 'text/plain;charset=utf-8' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `CV_Aimable_Maombi_Bunoti.txt`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 py-2.5 px-3 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Télécharger le CV officiel (.txt)</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* BUNO TECH Presentation: Mission, Vision, 6 Values & 6 Steps */}
-            <div className="rounded-2xl bg-slate-900 text-white p-8 lg:p-10 space-y-8">
-              <div className="max-w-3xl space-y-3">
-                <div className="text-xs font-mono tracking-widest text-sky-400 uppercase">
-                  Entreprise de Prestations & Solutions Numériques
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold font-display">
-                  {BUNO_TECH_MANIFEST.name} — {BUNO_TECH_MANIFEST.subtitle}
-                </h2>
-                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                  BUNO Tech est une initiative technologique orientée vers la conception, le développement et l'amélioration de solutions informatiques adaptées aux besoins des particuliers, des entreprises, des ONG et des organisations à Goma et au-delà.
-                </p>
-                <p className="text-xs sm:text-sm text-slate-400 italic">
-                  « La technologie prend toute sa valeur lorsqu’elle répond à un besoin réel. »
-                </p>
-              </div>
-
-              {/* Mission & Vision */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
-                <div className="space-y-2 p-5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Notre Mission</h3>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    {BUNO_TECH_MANIFEST.mission}
-                  </p>
-                </div>
-                <div className="space-y-2 p-5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Notre Vision</h3>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    {BUNO_TECH_MANIFEST.vision}
-                  </p>
-                </div>
-              </div>
-
-              {/* 6 Core Values */}
-              <div className="space-y-4 pt-4 border-t border-slate-800">
-                <h3 className="text-base font-bold text-white">Nos 6 Valeurs Fondamentales</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {BUNO_TECH_MANIFEST.values.map((v, i) => (
-                    <div key={i} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1.5">
-                      <p className="font-bold text-sm text-white">{v.title}</p>
-                      <p className="text-xs text-slate-300 leading-relaxed">{v.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 6 Structured Steps */}
-              <div className="space-y-4 pt-4 border-t border-slate-800">
-                <h3 className="text-base font-bold text-white">Notre Démarche de Travail en 6 Étapes</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {BUNO_TECH_MANIFEST.workApproach.map((step) => (
-                    <div key={step.stepNumber} className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-1">
-                      <div className="text-xs font-mono font-bold text-sky-400">Étape {step.stepNumber}</div>
-                      <p className="font-bold text-sm text-white">{step.title}</p>
-                      <p className="text-xs text-slate-300 leading-relaxed">{step.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Target Clients */}
-              <div className="pt-4 border-t border-slate-800 space-y-3 text-xs">
-                <p className="font-bold text-white">Profils de Clients & Partenaires Accompagnés :</p>
-                <div className="flex flex-wrap gap-2">
-                  {BUNO_TECH_MANIFEST.targetClients.map((client, idx) => (
-                    <span key={idx} className="rounded-lg bg-slate-800 px-3 py-1.5 text-slate-300 font-medium">
-                      {client}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Complete Real Work Experiences */}
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-4">
-                <div>
-                  <p className="text-xs font-semibold text-sky-700">Parcours & Expériences Réelles</p>
-                  <h2 className="text-2xl font-bold text-slate-900 mt-0.5">Expériences Professionnelles</h2>
-                </div>
-                <p className="text-xs text-slate-500">10 postes & responsabilités vérifiables</p>
-              </div>
-
-              <div className="space-y-5">
-                {REAL_WORK_EXPERIENCES.map((exp) => (
-                  <div
-                    key={exp.id}
-                    className={`rounded-xl bg-white border p-6 space-y-3 transition-colors ${
-                      exp.isFlagship ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-200'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-slate-900 text-white">
-                          {exp.period}
-                        </span>
-                        <span className="text-sm font-bold text-slate-900">{exp.organization}</span>
-                        <span className="text-xs text-slate-500">({exp.location})</span>
-                      </div>
-                      {exp.statusText && (
-                        <span
-                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                            exp.isFlagship ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'
-                          }`}
-                        >
-                          {exp.statusText}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-base font-bold text-slate-900">{exp.title}</h3>
-
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-700 pt-1">
-                      {exp.responsibilities.map((resp, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-1" />
-                          <span>{resp}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Categorized Technical Skills */}
-            <div className="space-y-6">
-              <div className="border-b border-slate-200 pb-4">
-                <p className="text-xs font-semibold text-sky-700">Expertise Technique Approfondie</p>
-                <h2 className="text-2xl font-bold text-slate-900 mt-0.5">Compétences Techniques par Domaine</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {DETAILED_SKILLS_CATEGORIES.map((cat, idx) => (
-                  <div key={idx} className="rounded-xl bg-white border border-slate-200 p-5 space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                      <Code2 className="w-4 h-4 text-sky-600 shrink-0" />
-                      <h3 className="text-sm font-bold text-slate-900">{cat.category}</h3>
-                    </div>
-                    <ul className="space-y-1.5 text-xs text-slate-700">
-                      {cat.skills.map((skill, sIdx) => (
-                        <li key={sIdx} className="flex items-start gap-2">
-                          <span className="text-sky-600 font-bold">•</span>
-                          <span>{skill}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Education & Complementary Training */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-8 space-y-5">
-                <div className="border-b border-slate-200 pb-3">
-                  <p className="text-xs font-semibold text-sky-700">Parcours Académique & Professionnel</p>
-                  <h2 className="text-xl font-bold text-slate-900 mt-0.5">Formation et Apprentissage</h2>
-                  <p className="text-xs text-slate-600 mt-1">
-                    « Mon parcours informatique est principalement construit autour de l'autoformation et de la pratique, complétées par différentes formations ciblées. »
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {REAL_EDUCATION_ITEMS.map((item, idx) => (
-                    <div key={idx} className="rounded-xl bg-white border border-slate-200 p-4 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-mono font-bold text-sky-700">{item.period}</span>
-                        <span className="text-slate-500">{item.institution} ({item.location})</span>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
-                      {item.description && (
-                        <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Languages & Working Domains */}
-              <div className="lg:col-span-4 space-y-6">
-                <div className="rounded-xl bg-white border border-slate-200 p-6 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <Languages className="w-4 h-4 text-sky-600" />
-                    <h3 className="text-sm font-bold text-slate-900">Langues Pratiquées</h3>
-                  </div>
-                  <div className="space-y-2.5 text-xs">
-                    {CV_LANGUAGES.map((langItem, idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-900">{langItem.language}</span>
-                        <span className="text-slate-600">{langItem.level}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-xl bg-white border border-slate-200 p-6 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <Target className="w-4 h-4 text-sky-600" />
-                    <h3 className="text-sm font-bold text-slate-900">Domaines d'Intervention</h3>
-                  </div>
-                  <div className="space-y-2 text-xs text-slate-700 leading-relaxed">
-                    {CV_COMPETENCIES.interventionDomains.map((domain, idx) => (
-                      <p key={idx}>
-                        <strong className="text-slate-900">{domain.split(' : ')[0]} :</strong>{' '}
-                        {domain.split(' : ')[1]}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Interactive 7-Stage Career Timeline */}
-            <div className="space-y-6 pt-4 border-t border-slate-200">
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+            {/* Page Header & Segmented Tab Switcher */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-6">
               <div>
-                <p className="text-xs font-semibold text-sky-700">
-                  Découverte → Apprentissage → Pratique → Expérience → Développement → Transmission → Innovation
+                <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-800">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Entreprise Technologique & Solutions Numériques</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display mt-2">
+                  À propos de {settings.brandName}
+                </h1>
+                <p className="text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+                  Mission, vision, valeurs fondamentales et méthode de travail. Une structure conçue pour répondre aux défis numériques et évoluer avec ses collaborateurs.
                 </p>
-                <h2 className="text-2xl font-bold text-slate-900 mt-1">
-                  Timeline Professionnelle & Évolution
-                </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {CAREER_TIMELINE.map((item) => (
-                  <div
-                    key={item.stepNumber}
-                    className="rounded-xl bg-white border border-slate-200 p-5 flex flex-col justify-between space-y-4"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-mono font-bold text-sky-700">Étape {item.stepNumber}</span>
-                        <span className="font-semibold text-slate-900">{item.stage}</span>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
-                      <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
-                    </div>
-                    <div className="pt-3 border-t border-slate-100 text-[11px] font-medium text-slate-500">
-                      Jalon : {item.keyMilestone}
-                    </div>
-                  </div>
-                ))}
+              {/* Segmented Switcher: Entreprise vs Direction & Fondateur */}
+              <div className="inline-flex rounded-xl bg-slate-100 p-1.5 text-xs font-semibold shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setAboutTab('company')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    aboutTab === 'company'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                  <span>L'Entreprise BUNO Tech</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAboutTab('founder')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    aboutTab === 'founder'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Direction & Fondateur (CV)</span>
+                </button>
               </div>
             </div>
+
+            {/* TAB 1: L'ENTREPRISE BUNO TECH (Mission, Vision, Valeurs, Méthode, Équipe) */}
+            {aboutTab === 'company' && (
+              <div className="space-y-12">
+                {/* Brand Showcase Hero */}
+                <div className="rounded-2xl bg-slate-900 text-white p-8 lg:p-10 space-y-8">
+                  <div className="max-w-3xl space-y-3">
+                    <div className="text-xs font-mono tracking-widest text-sky-400 uppercase">
+                      Manifeste & Positionnement Officiel
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold font-display">
+                      {BUNO_TECH_MANIFEST.name} — {BUNO_TECH_MANIFEST.subtitle}
+                    </h2>
+                    <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                      BUNO Tech est une initiative technologique orientée vers la conception, le développement et l'amélioration de solutions informatiques adaptées aux besoins des particuliers, des entreprises, des ONG et des organisations à Goma et au-delà.
+                    </p>
+                    <p className="text-xs sm:text-sm text-sky-300 italic">
+                      « La technologie prend toute sa valeur lorsqu’elle répond à un besoin réel. »
+                    </p>
+                  </div>
+
+                  {/* Mission & Vision */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                    <div className="space-y-2 p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+                      <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Notre Mission</h3>
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {BUNO_TECH_MANIFEST.mission}
+                      </p>
+                    </div>
+                    <div className="space-y-2 p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+                      <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Notre Vision</h3>
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {BUNO_TECH_MANIFEST.vision}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 6 Core Values */}
+                  <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <h3 className="text-base font-bold text-white">Nos 6 Valeurs Fondamentales</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {BUNO_TECH_MANIFEST.values.map((v, i) => (
+                        <div key={i} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1.5">
+                          <p className="font-bold text-sm text-white">{v.title}</p>
+                          <p className="text-xs text-slate-300 leading-relaxed">{v.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 6 Structured Steps */}
+                  <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <h3 className="text-base font-bold text-white">Notre Démarche de Travail en 6 Étapes</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {BUNO_TECH_MANIFEST.workApproach.map((step) => (
+                        <div key={step.stepNumber} className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-1">
+                          <div className="text-xs font-mono font-bold text-sky-400">Étape {step.stepNumber}</div>
+                          <p className="font-bold text-sm text-white">{step.title}</p>
+                          <p className="text-xs text-slate-300 leading-relaxed">{step.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Target Clients */}
+                  <div className="pt-4 border-t border-slate-800 space-y-3 text-xs">
+                    <p className="font-bold text-white">Profils de Clients & Partenaires Accompagnés :</p>
+                    <div className="flex flex-wrap gap-2">
+                      {BUNO_TECH_MANIFEST.targetClients.map((client, idx) => (
+                        <span key={idx} className="rounded-lg bg-slate-800 px-3 py-1.5 text-slate-300 font-medium">
+                          {client}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team & Organizational Scalability Card */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="lg:col-span-7 rounded-2xl bg-white border border-slate-200 p-8 space-y-5">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                      <Users className="w-5 h-5 text-sky-600" />
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Organisation d'Entreprise & Perspectives d'Équipe
+                      </h3>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      BUNO Tech est structurée dès sa fondation comme une entreprise évolutive. Elle est dirigée techniquement par son fondateur, <strong>{settings.ownerName}</strong>, et conçoit ses processus, ses normes de code et son identité de marque de manière indépendante des personnes physiques.
+                    </p>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      Cette architecture permet à BUNO Tech d'intégrer des développeurs associés, des formateurs informatiques et des prestataires spécialisés pour intervenir en équipe sur des projets de grande ampleur, tout en garantissant un niveau de qualité et de support homogène.
+                    </p>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setAboutTab('founder')}
+                        className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                      >
+                        <UserCheck className="w-4 h-4 text-sky-400" />
+                        <span>Consulter le profil et le CV du fondateur ({settings.ownerName})</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* BUNO Tech Corporate Contact & Channels */}
+                  <div className="lg:col-span-5 rounded-2xl bg-slate-50 border border-slate-200 p-6 space-y-4">
+                    <div className="pb-2 border-b border-slate-200">
+                      <h3 className="text-sm font-bold text-slate-900">Coordonnées Professionnelles de l'Entreprise</h3>
+                      <p className="text-xs text-slate-500">Canaux officiels BUNO Tech</p>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-slate-500">Siège opérationnel</p>
+                          <p className="font-semibold text-slate-900">{BUNO_TECH_MANIFEST.location}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <Phone className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-slate-500">WhatsApp d'entreprise</p>
+                          <a
+                            href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono font-bold text-slate-900 hover:text-sky-700"
+                          >
+                            {settings.whatsapp}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <Mail className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-slate-500">Email professionnel officiel</p>
+                          <a href={`mailto:${settings.email}`} className="font-mono font-semibold text-slate-900 hover:text-sky-700">
+                            {settings.email}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-200 space-y-1.5">
+                        <p className="font-bold text-slate-900">Médias & Réseaux BUNO Tech :</p>
+                        <a
+                          href={settings.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-rose-600 hover:underline"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>YouTube officiel : Aimable Buno Tech</span>
+                        </a>
+                        <div className="flex items-center gap-2 text-slate-700">
+                          <Globe className="w-3.5 h-3.5 text-sky-600" />
+                          <span>Facebook : Page officielle Buno Tech</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: DIRECTION TECHNIQUE & FONDATEUR (Aimable Maombi Bunoti & CV) */}
+            {aboutTab === 'founder' && (
+              <div className="space-y-16">
+                {/* Notice of Separation */}
+                <div className="p-4 rounded-xl bg-sky-50 border border-sky-200 text-xs text-sky-900 flex items-start gap-3">
+                  <ShieldCheck className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Profil de la Direction Technique :</strong> Ce profil présente l'expérience individuelle, les compétences et les références d'<strong>{settings.ownerName}</strong>, fondateur et responsable technique de BUNO Tech. Le compte administrateur est associé à cette identité réelle, garantissant transparence et responsabilité vérifiable.
+                  </div>
+                </div>
+
+                {/* Executive Bio & Identity Card */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-b border-slate-200 pb-12">
+                  <div className="lg:col-span-7 space-y-5">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800">
+                      <MapPin className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Goma, République démocratique du Congo</span>
+                    </div>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
+                      {settings.ownerName}
+                    </h2>
+                    <p className="text-sm sm:text-base font-semibold text-slate-800">
+                      Fondateur & Directeur Technique | Informaticien polyvalent | Développeur & Concepteur | Formateur
+                    </p>
+                    <div className="text-sm sm:text-base text-slate-700 leading-relaxed space-y-3 whitespace-pre-wrap">
+                      {settings.bioNarrative}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
+                      <p className="text-xs font-mono uppercase tracking-wider text-sky-400">
+                        Démarche Professionnelle & Approche de Résolution
+                      </p>
+                      <p className="text-sm font-bold">
+                        {BUNO_TECH_MANIFEST.professionalApproachMethod}
+                      </p>
+                      <p className="text-xs text-slate-300">
+                        « Comprendre le problème avant de choisir la technologie. Construire des solutions simples, utiles, maintenables et adaptées au contexte réel des utilisateurs. »
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Verified Personal Contact Card */}
+                  <div className="lg:col-span-5 rounded-2xl bg-white border border-slate-200 p-6 space-y-5 shadow-xs">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">Coordonnées du Fondateur</h3>
+                        <p className="text-xs text-slate-500">Contact direct & Profils publics</p>
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                        Vérifié
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="flex items-start gap-3">
+                        <Mail className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-slate-500">Email personnel direct</p>
+                          <a href="mailto:aimablebunoti@gmail.com" className="font-mono font-semibold text-slate-900 hover:text-sky-700">
+                            aimablebunoti@gmail.com
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <Phone className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-slate-500">WhatsApp personnel</p>
+                          <span className="font-mono font-bold text-slate-900">{settings.whatsapp}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 space-y-2">
+                        <p className="font-bold text-slate-900">Profils Techniques et Professionnels :</p>
+                        <div className="grid grid-cols-1 gap-1.5 text-xs">
+                          <a
+                            href={settings.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sky-700 hover:underline"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>LinkedIn : Aimable Maombi Bunoti</span>
+                          </a>
+                          <a
+                            href={settings.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-slate-800 hover:underline font-mono"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>GitHub : Aimable2025</span>
+                          </a>
+                          <a
+                            href={settings.youtube}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-rose-600 hover:underline"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>YouTube : Aimable Buno Tech</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cvContent = `CURRICULUM VITAE PROFESSIONNEL\n==================================================\n${settings.ownerName}\nInformaticien polyvalent | Développeur | Formateur | Support & SI\nLocalisation : Goma, République démocratique du Congo\nWhatsApp : ${settings.whatsapp}\nEmail : aimablebunoti@gmail.com / ${settings.email}\nLinkedIn : ${settings.linkedin}\nYouTube : ${settings.youtube}\nGitHub : ${settings.github}\n\nPROFIL :\n${settings.bioNarrative}\n\nEXPÉRIENCES PROFESSIONNELLES :\n${REAL_WORK_EXPERIENCES.map((e) => `\n* ${e.title} — ${e.organization} (${e.location}) [${e.period}]\n  ${e.responsibilities.join('\n  - ')}`).join('\n')}\n\nFORMATIONS & DIPLÔMES :\n${REAL_EDUCATION_ITEMS.map((ed) => `* ${ed.period} : ${ed.title} — ${ed.institution} (${ed.location})`).join('\n')}\n\nLANGUES :\n${CV_LANGUAGES.map((l) => `* ${l.language} : ${l.level}`).join('\n')}`;
+                            const blob = new Blob([cvContent], { type: 'text/plain;charset=utf-8' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `CV_Aimable_Maombi_Bunoti.txt`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 py-2.5 px-3 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Télécharger le CV officiel (.txt)</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Complete Real Work Experiences */}
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-4">
+                    <div>
+                      <p className="text-xs font-semibold text-sky-700">Parcours & Expériences Réelles</p>
+                      <h3 className="text-2xl font-bold text-slate-900 mt-0.5">Expériences Professionnelles</h3>
+                    </div>
+                    <p className="text-xs text-slate-500">10 postes & responsabilités vérifiables</p>
+                  </div>
+
+                  <div className="space-y-5">
+                    {REAL_WORK_EXPERIENCES.map((exp) => (
+                      <div
+                        key={exp.id}
+                        className={`rounded-xl bg-white border p-6 space-y-3 transition-colors ${
+                          exp.isFlagship ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-slate-900 text-white">
+                              {exp.period}
+                            </span>
+                            <span className="text-sm font-bold text-slate-900">{exp.organization}</span>
+                            <span className="text-xs text-slate-500">({exp.location})</span>
+                          </div>
+                          {exp.statusText && (
+                            <span
+                              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                exp.isFlagship ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {exp.statusText}
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="text-base font-bold text-slate-900">{exp.title}</h4>
+
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-700 pt-1">
+                          {exp.responsibilities.map((resp, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-1" />
+                              <span>{resp}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Categorized Technical Skills */}
+                <div className="space-y-6">
+                  <div className="border-b border-slate-200 pb-4">
+                    <p className="text-xs font-semibold text-sky-700">Expertise Technique Approfondie</p>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-0.5">Compétences Techniques par Domaine</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {DETAILED_SKILLS_CATEGORIES.map((cat, idx) => (
+                      <div key={idx} className="rounded-xl bg-white border border-slate-200 p-5 space-y-3">
+                        <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                          <Code2 className="w-4 h-4 text-sky-600 shrink-0" />
+                          <h4 className="text-sm font-bold text-slate-900">{cat.category}</h4>
+                        </div>
+                        <ul className="space-y-1.5 text-xs text-slate-700">
+                          {cat.skills.map((skill, sIdx) => (
+                            <li key={sIdx} className="flex items-start gap-2">
+                              <span className="text-sky-600 font-bold">•</span>
+                              <span>{skill}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Education & Complementary Training */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="lg:col-span-8 space-y-5">
+                    <div className="border-b border-slate-200 pb-3">
+                      <p className="text-xs font-semibold text-sky-700">Parcours Académique & Professionnel</p>
+                      <h3 className="text-xl font-bold text-slate-900 mt-0.5">Formation et Apprentissage</h3>
+                      <p className="text-xs text-slate-600 mt-1">
+                        « Mon parcours informatique est principalement construit autour de l'autoformation et de la pratique, complétées par différentes formations ciblées. »
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {REAL_EDUCATION_ITEMS.map((item, idx) => (
+                        <div key={idx} className="rounded-xl bg-white border border-slate-200 p-4 space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-mono font-bold text-sky-700">{item.period}</span>
+                            <span className="text-slate-500">{item.institution} ({item.location})</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+                          {item.description && (
+                            <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Languages & Working Domains */}
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="rounded-xl bg-white border border-slate-200 p-6 space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                        <Languages className="w-4 h-4 text-sky-600" />
+                        <h4 className="text-sm font-bold text-slate-900">Langues Pratiquées</h4>
+                      </div>
+                      <div className="space-y-2.5 text-xs">
+                        {CV_LANGUAGES.map((langItem, idx) => (
+                          <div key={idx} className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-900">{langItem.language}</span>
+                            <span className="text-slate-600">{langItem.level}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white border border-slate-200 p-6 space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                        <Target className="w-4 h-4 text-sky-600" />
+                        <h4 className="text-sm font-bold text-slate-900">Domaines d'Intervention</h4>
+                      </div>
+                      <div className="space-y-2 text-xs text-slate-700 leading-relaxed">
+                        {CV_COMPETENCIES.interventionDomains.map((domain, idx) => (
+                          <p key={idx}>
+                            <strong className="text-slate-900">{domain.split(' : ')[0]} :</strong>{' '}
+                            {domain.split(' : ')[1]}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interactive 7-Stage Career Timeline */}
+                <div className="space-y-6 pt-4 border-t border-slate-200">
+                  <div>
+                    <p className="text-xs font-semibold text-sky-700">
+                      Découverte → Apprentissage → Pratique → Expérience → Développement → Transmission → Innovation
+                    </p>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1">
+                      Timeline Professionnelle & Évolution
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {CAREER_TIMELINE.map((item) => (
+                      <div
+                        key={item.stepNumber}
+                        className="rounded-xl bg-white border border-slate-200 p-5 flex flex-col justify-between space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-mono font-bold text-sky-700">Étape {item.stepNumber}</span>
+                            <span className="font-semibold text-slate-900">{item.stage}</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                        </div>
+                        <div className="pt-3 border-t border-slate-100 text-[11px] font-medium text-slate-500">
+                          Jalon : {item.keyMilestone}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
-        {/* VIEW 4: PORTFOLIO */}
+        {/* VIEW 4: RÉALISATIONS (Applications, documents, formations et projets) */}
         {currentView === 'portfolio' && (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-6">
               <div>
-                <p className="text-xs font-semibold text-sky-700">Réalisations & Projets BUNO Tech</p>
-                <h1 className="text-3xl font-bold text-slate-900 mt-1">Portfolio Numérique</h1>
+                <p className="text-xs font-semibold text-sky-700">Applications, documents, formations et projets</p>
+                <h1 className="text-3xl font-bold text-slate-900 mt-1">Nos Réalisations</h1>
               </div>
 
               {/* Interactive Filter Controls */}
@@ -2376,36 +2551,51 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs">
           <div className="space-y-2">
             <p className="text-base font-bold text-white font-display">{settings.brandName}</p>
-            <p className="text-slate-300 font-semibold">{settings.ownerName}</p>
-            <p className="leading-relaxed">{settings.tagline}</p>
+            <p className="text-sky-400 font-semibold">{settings.tagline}</p>
+            <p className="leading-relaxed text-slate-400">
+              Entreprise de prestations de services informatiques, de développement logiciel et de solutions numériques.
+            </p>
+            <p className="text-[11px] text-slate-500 pt-1">
+              Direction technique & Fondateur : <strong className="text-slate-300">{settings.ownerName}</strong>
+            </p>
           </div>
 
           <div className="space-y-2">
             <p className="font-bold text-white">Navigation</p>
             <ul className="space-y-1.5">
               <li>
+                <button type="button" onClick={() => setCurrentView('home')} className="hover:text-white cursor-pointer">
+                  Accueil (Présentation & Actions)
+                </button>
+              </li>
+              <li>
                 <button type="button" onClick={() => setCurrentView('services')} className="hover:text-white cursor-pointer">
-                  Services Numériques
+                  Services Informatiques
                 </button>
               </li>
               <li>
                 <button type="button" onClick={() => setCurrentView('about')} className="hover:text-white cursor-pointer">
-                  Mon Parcours & CV
-                </button>
-              </li>
-              <li>
-                <button type="button" onClick={() => setCurrentView('portfolio')} className="hover:text-white cursor-pointer">
-                  Portfolio
+                  À propos (Mission, Vision & Valeurs)
                 </button>
               </li>
               <li>
                 <button type="button" onClick={() => setCurrentView('partners')} className="hover:text-white cursor-pointer">
-                  Partenaires
+                  Partenaires Vérifiés
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => setCurrentView('portfolio')} className="hover:text-white cursor-pointer">
+                  Réalisations (Projets & Formations)
                 </button>
               </li>
               <li>
                 <button type="button" onClick={() => setCurrentView('testimonials')} className="hover:text-white cursor-pointer">
-                  Témoignages
+                  Témoignages Clients
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => setCurrentView('contact')} className="hover:text-white cursor-pointer">
+                  Contact & Devis
                 </button>
               </li>
               <li>
@@ -2426,43 +2616,57 @@ export default function App() {
           </div>
 
           <div className="space-y-2">
-            <p className="font-bold text-white">Outils & Espace Client</p>
+            <p className="font-bold text-white">Espace Client & Solutions</p>
             <ul className="space-y-1.5">
-              <li>
-                <button type="button" onClick={() => setCurrentView('quote_calculator')} className="hover:text-white cursor-pointer">
-                  Calculateur de Devis (USD/CDF)
-                </button>
-              </li>
-              <li>
-                <button type="button" onClick={() => setCurrentView('premium')} className="hover:text-white cursor-pointer">
-                  BUNO Tech Premium (Éditeur, Modèles, Formation, IA)
-                </button>
-              </li>
               <li>
                 <button
                   type="button"
                   onClick={() => setCurrentView(firebaseUser ? 'client_dashboard' : 'auth')}
-                  className="hover:text-white cursor-pointer"
+                  className="hover:text-white cursor-pointer font-semibold text-slate-200"
                 >
-                  Tableau de bord Client
+                  Espace Client (Demandes & Devis)
                 </button>
               </li>
+              <li>
+                <button type="button" onClick={() => setCurrentView('premium')} className="hover:text-white cursor-pointer">
+                  BUNO Tech Premium (Éditeur, Formateur IT, IA)
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => setCurrentView('quote_calculator')} className="hover:text-white cursor-pointer">
+                  Calculateur de Devis (USD / CDF)
+                </button>
+              </li>
+              {isAdmin && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('admin_dashboard')}
+                    className="hover:text-white cursor-pointer text-amber-400 font-semibold"
+                  >
+                    Console d'Administration
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
           <div className="space-y-2">
-            <p className="font-bold text-white">Contact & Réseaux</p>
+            <p className="font-bold text-white">Coordonnées Officielles</p>
             <p>WhatsApp : {settings.whatsapp}</p>
-            <p>Email : {settings.email}</p>
-            <p>GitHub : Aimable2025</p>
+            <p>Email entreprise : {settings.email}</p>
+            <p>Siège : Goma, RD Congo</p>
+            <p className="text-[11px] text-slate-500 pt-1">
+              GitHub Direction : Aimable2025
+            </p>
             <div className="pt-2">
               <PWAInstallButton variant="compact" />
             </div>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} {settings.ownerName} — {settings.brandName}. Tous droits réservés.</p>
-          <p>Application Web Progressive (PWA) sécurisée</p>
+          <p>© {new Date().getFullYear()} {settings.brandName}. Direction technique : {settings.ownerName}. Tous droits réservés.</p>
+          <p>Application Web Progressive (PWA) — BUNO Tech</p>
         </div>
       </footer>
     </div>
